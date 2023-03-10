@@ -1,21 +1,30 @@
-import React from 'react';
-import { View, Text, TextInput, StyleSheet,Image, TouchableOpacity} from 'react-native';
+import { View, Text , StyleSheet, TouchableOpacity} from 'react-native'
+import React from 'react'
+import { MaterialIcons } from '@expo/vector-icons'; 
+import { useNavigation } from '@react-navigation/native';
 import Toolbar from './Toolbar';
 
+
 const ReportPage = (props) => {
+const navigation = useNavigation();
+
+
   return (
     <View style={styles.allPage}>
         <Toolbar/>
-        <Text style={styles.separation}></Text>
-        <Text style={styles.pageTitle}>דיווח:</Text>
+
+        <View style={styles.title}>            
+        <MaterialIcons name="update" size={50} color="black" />
+            <Text style={styles.pageTitle}>דיווח: </Text>
+        </View>
 
         <View style={styles.loc}>
             <View style={styles.row}>
-                <TouchableOpacity style={styles.butt1} >
+                <TouchableOpacity  style={[styles.butt, { backgroundColor:'#f6f9ff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'ציונים'})}>
                     <Text style={styles.text}>ציונים</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.butt2}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#ecf2ff' }]} onPress={() => navigation.navigate('ChooseClass' , {param1:'נוכחות'})}>
                     <Text style={styles.text}>נוכחות</Text>
                 </TouchableOpacity>
             </View>
@@ -23,11 +32,11 @@ const ReportPage = (props) => {
 
         <View style={styles.loc}>
             <View style={styles.row}>
-            <TouchableOpacity style={styles.butt3} >
+            <TouchableOpacity style={[styles.butt, { backgroundColor:'#e3ecff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'מצב חברתי'})}>
                     <Text style={styles.text}>מצב חברתי</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.butt4}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#dae5ff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'מצב נפשי'})}>
                     <Text style={styles.text}>מצב נפשי</Text>
                 </TouchableOpacity>
             </View>
@@ -35,11 +44,11 @@ const ReportPage = (props) => {
 
         <View style={styles.loc}>
             <View style={styles.row}>
-            <TouchableOpacity style={styles.butt5} >
+            <TouchableOpacity style={[styles.butt, { backgroundColor:'#d1dfff' }]} onPress={() => navigation.navigate('ChooseClass' ,{param1:' אלימות'})} >
                 <Text style={styles.text}>אלימות</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.butt6}>
+            <TouchableOpacity style={[styles.butt, { backgroundColor:'#c7d9fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'אירועים שונים'})}>
                 <Text style={styles.text}>אירועים שונים</Text>
             </TouchableOpacity>
             </View>
@@ -47,123 +56,63 @@ const ReportPage = (props) => {
 
         <View style={styles.loc}>
             <View style={styles.row}>
-                <TouchableOpacity style={styles.butt7} >
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#bed2fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'נראות'})}>
                     <Text style={styles.text}>נראות</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.butt8}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#b5ccfe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'תזונה'})}>
                     <Text style={styles.text}>תזונה</Text>
                 </TouchableOpacity>
             </View>
         </View>
 
-        <View style={styles.loc}>
+        {/* <View style={styles.loc}>
             <View style={styles.row}>
-                <TouchableOpacity style={styles.butt9} >
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#abc5fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'שונות 1'})} >
                     <Text style={styles.text}>שונות1</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.butt10}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#abc5fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'שונות 2'})}>
                     <Text style={styles.text}>שונות2</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </View> */}
+
+        <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('HomePage')}>
+        <MaterialIcons name="navigate-next" size={24} color="black" />
+        <Text >הקודם</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
     allPage: {
-        backgroundColor:'white'
+        flex:1,
+        alignItems: 'center',
+        
+        
     },
+     title: {
+        //  flexDirection:'row',
+         justifyContent:'space-around',
+         alignItems:'center'
+     },
     pageTitle:{
         color:'black',
         fontSize:60,
         fontWeight:'bold',
-        textAlign:'center'        
     },
     row:{
         flexDirection:'row',  
+        justifyContent: 'space-around'
     },
-    butt1:{
-        backgroundColor:'#f6f9ff',
+    butt:{
         borderRadius:20,
         width: 180,
         height: 65,
         marginHorizontal: 30,
         borderWidth:1,
-    },
-    butt2:{
-        backgroundColor:'#ecf2ff',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        borderWidth:1,
-        shadowColor: 'blue',
-    },
-    butt3:{
-        backgroundColor:'#e3ecff',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        marginHorizontal: 30,
-        borderWidth:1,
-    },
-    butt4:{
-        backgroundColor:'#dae5ff',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        borderWidth:1,
-        shadowColor: 'blue',
-    },
-    butt5:{ 
-        backgroundColor:'#d1dfff',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        marginHorizontal: 30,
-        borderWidth:1,
-    },
-    butt6:{
-        backgroundColor:'#c7d9fe',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        borderWidth:1,
-        shadowColor: 'blue',
-    },
-    butt7:{
-        backgroundColor:'#bed2fe',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        marginHorizontal: 30,
-        borderWidth:1,
-    },
-    butt8:{
-        backgroundColor:'#b5ccfe',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        borderWidth:1,
-        shadowColor: 'blue',
-    },
-    butt9:{
-        backgroundColor:'#abc5fe',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        marginHorizontal: 30,
-        borderWidth:1,
-    },
-    butt10:{
-        backgroundColor:'#A8B5E0',
-        borderRadius:20,
-        width: 180,
-        height: 65,
-        borderWidth:1,
-        shadowColor: 'blue',
     },
     text: {
         fontSize:30,
@@ -171,9 +120,13 @@ const styles = StyleSheet.create({
         padding:10
     },
     loc:{
-        paddingTop:25,
+        paddingTop:30,
+    },
+    back: {
+        padding:'30%'
     }
-  
+   
+
 });
 
 export default ReportPage;

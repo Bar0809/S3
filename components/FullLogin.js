@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { View, TextInput, Button, useState, StyleSheet, Text, TouchableOpacity, ScrollView, Image, Alert} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import LoginForm from './Login';
 import { auth } from './firebase'
 import {signInWithEmailAndPassword} from 'firebase/auth'
   
@@ -17,11 +15,7 @@ const navigation = useNavigation();
   const [password, setPassword] = React.useState('');
   const handleLogin = async () => {
     try {
-      const user = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const user = await signInWithEmailAndPassword(auth,email,password );
       navigation.navigate("HomePage");
     } catch (error) {
       Alert.alert('אופס',error.message);

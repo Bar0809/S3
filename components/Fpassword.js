@@ -3,9 +3,12 @@ import React, {useState} from 'react'
 import { auth } from './firebase'
 import {sendPasswordResetEmail} from 'firebase/auth'
 import { useNavigation } from '@react-navigation/native';
+
+
 const Fpassword = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
+
   const handlePassword = async () => {
     await sendPasswordResetEmail(auth, email)
         .then(() => {
@@ -18,6 +21,7 @@ const Fpassword = () => {
             console.warn(e);
         });
 };
+
   return (
     <View style={styles.mainView}>
       <Text>אפס סיסמא</Text>
@@ -34,15 +38,12 @@ const Fpassword = () => {
   )
 }
 
-
-
 export default Fpassword
 
 const styles=StyleSheet.create({
   mainView: {
     alignItems: 'center',
     padding: 50,
-  
   },
   input: {
     backgroundColor: 'white',
@@ -57,9 +58,6 @@ const styles=StyleSheet.create({
   },
   image: {
     width: '100%',
-    // maxWidth: 300,
-    // maxHeight: 200,
-
   },
   login: {
     backgroundColor: '#1E90FF',
@@ -69,7 +67,6 @@ const styles=StyleSheet.create({
     padding: 18,
     height: 60,
     width: '50%' 
-
     },
     back: {
       backgroundColor: '#87CEFA',
@@ -83,6 +80,6 @@ const styles=StyleSheet.create({
       top: 50,
       textAlign: 'center'
     },
- 
+
 }
 );
