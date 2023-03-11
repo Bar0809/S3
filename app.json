@@ -18,7 +18,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "plugins": ["expo-document-picker"]
     },
     "android": {
       "inputMethod": "hebrew",
@@ -26,7 +27,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "plugins": ["expo-document-picker"]
     },
     "web": {
       "favicon": "./assets/favicon.png"

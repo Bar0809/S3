@@ -7,7 +7,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from './firebase'
 import { doc, setDoc, updateDoc } from "firebase/firestore"; 
-
+import XLSX from 'xlsx';
+import { read, utils } from 'xlsx';
+import * as FileSystem from 'expo-file-system';
+import * as DocumentPicker from 'expo-document-picker';
 const SetDetails = () => {
 const navigation = useNavigation();
 
@@ -17,6 +20,9 @@ const [textInputs, setTextInputs] = useState([]);
 const [firstName, setFirstName] = useState('');
 const [lastName, setLastName] = useState('');
 const [schoolName, setSchoolName] = useState('');
+
+const [fileResponse, setFileResponse] = useState([]);
+
 
   const handleFirstInput = (text) => {
     setFirstInput(text);
@@ -38,6 +44,34 @@ const [schoolName, setSchoolName] = useState('');
   });
   }
 
+  const readExcelFile = async () => {
+    console.log(fileResponse['uri'])
+    try {
+      const { uri } = fileResponse;
+      const fileContents = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      const workbook = XLSX.read(fileContents, { type: 'base64' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  
+
+  const pickDocument = async () => {
+    try {
+      let result = await DocumentPicker.getDocumentAsync({});
+      setFileResponse(result);
+      // process the Excel file
+      // Alert.alert(fileUri + '\n' + fileType + '\n' + fileName)
+      // Alert.alert(fileResponse)
+    } catch (error) {
+      // Alert.alert(error.message)
+    }
+  }
 
   return (
     <View style={styles.mainView} >
@@ -50,6 +84,16 @@ const [schoolName, setSchoolName] = useState('');
         <TouchableOpacity style={styles.butt}  onPress={() => handleSubmit()}>
         <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
         <Text >יצירת כיתה</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.butt}  onPress={() => pickDocument()}>
+        <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
+        <Text >בחר קובץ</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.butt}  onPress={() => readExcelFile()}>
+        <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
+        <Text >טען נתונים</Text>
         </TouchableOpacity>
 
         {shouldShow ? (

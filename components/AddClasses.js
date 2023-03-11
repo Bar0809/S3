@@ -8,7 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { auth, db } from './firebase'
 import { doc, setDoc, updateDoc } from "firebase/firestore"; 
 import XLSX from 'xlsx';
-
+import DocumentPicker from 'react-native-document-picker';
 const AddClasses = () => {
 const navigation = useNavigation();
 
@@ -36,7 +36,22 @@ const [schoolName, setSchoolName] = useState('');
       console.log(error);
     }
   }
-  
+
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+      });
+      const fileUri = result.uri;
+      const fileType = result.type;
+      const fileName = result.name;
+      // process the Excel file
+      Alert.alert(fileUri + '\n' + fileType + '\n' + fileName)
+    } catch (error) {
+      Alert.alert(error)
+    }
+  }
+
   const handleSubmit = async () => {
     const DocRef = doc(db, "users", auth.currentUser.uid);
     await setDoc(DocRef, {
@@ -60,6 +75,11 @@ const [schoolName, setSchoolName] = useState('');
         <TouchableOpacity style={styles.butt}  onPress={() => handleSubmit()}>
         <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
         <Text >יצירת כיתה</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.butt}  onPress={() => pickDocument()}>
+        <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
+        <Text >בחר קובץ</Text>
         </TouchableOpacity>
 
         {shouldShow ? (
