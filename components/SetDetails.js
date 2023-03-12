@@ -6,6 +6,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons'; 
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from './firebase'
+import { MaterialCommunityIcons } from '@expo/vector-icons'; 
 import { doc, setDoc, updateDoc } from "firebase/firestore"; 
 import XLSX from 'xlsx';
 import { read, utils } from 'xlsx';
@@ -52,8 +53,27 @@ const [fileResponse, setFileResponse] = useState([]);
       const workbook = XLSX.read(fileContents, { type: 'base64' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet);
-      console.log(data);
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      data[0].forEach((columnName, columnIndex) => {
+        const columnData = data.slice(1).map(row => row[columnIndex]);
+        const DocRef = doc(db, `users/${auth.currentUser.uid}/classes`, columnName);
+        setDoc(DocRef, {
+          [columnName]: columnData
+        }, { merge: true }).then(() => {
+          // Alert.alert("קרה")
+        });
+        const DocRefOne = doc(db, "users", auth.currentUser.uid);
+        setDoc(DocRefOne, {
+          first_name: firstName,
+          last_name: lastName,
+          school_name: schoolName,
+      }, { merge: true }).then(() => {
+        // Alert.alert("קרה")
+      });
+      }).then(() => {
+        // navigation.navigate('HomePage')
+      });
     } catch (error) {
       console.log(error);
     }
@@ -81,14 +101,11 @@ const [fileResponse, setFileResponse] = useState([]);
         <TextInput style={[styles.input, { textAlign: 'right' }]} placeholder=' שם משפחה:' value={lastName} onChangeText={text => setLastName(text)}></TextInput>
         <TextInput style={[styles.input, { textAlign: 'right' }]} placeholder=' שם ביה"ס:' value={schoolName} onChangeText={text => setSchoolName(text)}></TextInput>
 
-        <TouchableOpacity style={styles.butt}  onPress={() => handleSubmit()}>
-        <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
-        <Text >יצירת כיתה</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity style={styles.butt}  onPress={() => pickDocument()}>
-        <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
-        <Text >בחר קובץ</Text>
+        <MaterialCommunityIcons  style={styles.icon} name="file-excel-outline" size={24} color="black" />
+        {/* <Ionicons style={styles.icon} name="create-outline" size={24} color="black" /> */}
+        <Text >בחר קובץ אקסל</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.butt}  onPress={() => readExcelFile()}>
@@ -170,11 +187,12 @@ const styles=StyleSheet.create({
     margin: 10,
    },
    butt: {
-    backgroundColor: '#87CEFA',
-    borderRadius: 200,
-    padding: 25,
-    width: '50%',
-    top:20,
+    backgroundColor: '#90EE90',
+    borderRadius: 50,
+    padding: 20,
+    width: '100%',
+    top: 20,
+    marginBottom: 10,
   },
   classes: {
     top:30,
