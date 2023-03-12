@@ -71,12 +71,11 @@ const [fileResponse, setFileResponse] = useState([]);
       }, { merge: true }).then(() => {
         // Alert.alert("קרה")
       });
-      }).then(() => {
-        // navigation.navigate('HomePage')
-      });
+      })
     } catch (error) {
       console.log(error);
     }
+    navigation.navigate('HomePage')
   }
 
   
