@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import Toolbar from './Toolbar';
 import { FontAwesome } from '@expo/vector-icons';
 import { auth, db } from './firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 
 const MyClasses = (props) => {
   const navigation = useNavigation();
@@ -27,9 +27,16 @@ const MyClasses = (props) => {
     if (docSnap.exists()) {
       setSelectedColumnData(docSnap.data());
       setSelectedColumn(columnName);
-      console.log(selectedColumnData[columnName])
     }
   };
+
+  const removeItemFromFirestoreArray = async (columnName, itemName) => {
+    const docRef = doc(db, `users/${auth.currentUser.uid}/classes/${columnName}`);
+    await updateDoc(docRef, {
+      [columnName]: arrayRemove(itemName)
+    });
+    console.log(`Item '${itemName}' removed from the '${columnName}' array.`);
+  }
 
   useEffect(() => {
     getColumnNames().then(setData).catch(console.error);
@@ -38,33 +45,35 @@ const MyClasses = (props) => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => getColumnData(item)}>
-      <Text
-        style={{ padding: 10, fontSize: 22, textAlign: 'right', textDecorationLine: 'underline' }}
-      >
+      <Text style={{ padding: 10, fontSize: 22, textAlign: 'center', textDecorationLine: 'underline' , flexDirection: 'column', justifyContent: 'center'}}>
         {item}
       </Text>
       {selectedColumn === item && selectedColumnData && selectedColumnData[item] &&
-        <View style={{ padding: 10 }}>
-          <Text style={{ fontWeight: 'bold' }}></Text>
-          <Text>{Object.values(selectedColumnData[item]).join('\n')}</Text>
-        </View>
+        Object.values(selectedColumnData[item]).map((value, index) => (
+          <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5, justifyContent: 'center' }}>
+            <TouchableOpacity onPress={() => removeItemFromFirestoreArray(item, value)}>
+              <FontAwesome name="remove" size={18} color="grey" />
+            </TouchableOpacity>
+            <Text>{value} </Text>
+          </View>
+        ))
       }
     </TouchableOpacity>
   );
-
+  
   return (
     <View style={styles.allPage}>
       <Toolbar />
-
       <View style={styles.title}>
-        <FontAwesome name="users" size={40} color="black" style={[{ paddingLeft: -50 }]} />
-        <Text style={styles.pageTitle}>הכיתות שלי:</Text>
+        <Text style={styles.pageTitle}> הכיתות שלי:</Text>
+        <FontAwesome name="users" size={30} color="black" style={[{ paddingLeft: -50 }]} />
       </View>
       <View>
         <FlatList
           data={data}
           renderItem={renderItem}
           keyExtractor={(item, index) => item + index}
+          contentContainerStyle={{ alignItems: 'center' }}
         />
       </View>
     
@@ -85,10 +94,11 @@ const styles = StyleSheet.create({
   },
   title: {
     alignItems: 'center',
+    flexDirection: 'row',
   },
   pageTitle: {
     color: 'black',
-    fontSize: 50,
+    fontSize: 30,
     fontWeight: 'bold',
   },
   back: {
