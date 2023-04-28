@@ -1,66 +1,64 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Toolbar from './Toolbar';
 import { FontAwesome } from '@expo/vector-icons';
 import { auth, db } from './firebase';
-import { collection, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 const MyClasses = (props) => {
   const navigation = useNavigation();
 
   const [data, setData] = useState([]);
-  const [selectedColumn, setSelectedColumn] = useState(null);
-  const [selectedColumnData, setSelectedColumnData] = useState([]);
 
-  const getColumnNames = async () => {
-    const collectionRef = collection(db, `users/${auth.currentUser.uid}/classes`);
-    const querySnapshot = await getDocs(collectionRef);
-    const columnNames = querySnapshot.docs.map(doc => doc.id);
-    return columnNames;
-  };
-
-  const getColumnData = async (columnName) => {
-    const docRef = doc(db, `users/${auth.currentUser.uid}/classes/${columnName}`);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      setSelectedColumnData(docSnap.data());
-      setSelectedColumn(columnName);
-    }
-  };
-
-  const removeItemFromFirestoreArray = async (columnName, itemName) => {
-    const docRef = doc(db, `users/${auth.currentUser.uid}/classes/${columnName}`);
-    await updateDoc(docRef, {
-      [columnName]: arrayRemove(itemName)
+  const getClasses = async () => {
+    const q = query(collection(db, 'Classes'), where('t_id', '==', auth.currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    const classNames = [];
+    querySnapshot.forEach((doc) => {
+      classNames.push(doc.id);
     });
-    console.log(`Item '${itemName}' removed from the '${columnName}' array.`);
-  }
+    setData(classNames);
+  };
 
   useEffect(() => {
-    getColumnNames().then(setData).catch(console.error);
+    getClasses().catch(console.error);
   }, []);
 
+  const handleDeleteStudents = async (className) => {
+    const q = query(collection(db, 'Students'), where('t_id', '==', auth.currentUser.uid), where('class_id', '==', className));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach(async (doc) => {
+      await deleteDoc(doc.ref);
+    });
+    handleDeleteClasses(className)
+  };
 
+  const handleDeleteClasses = async (className) => {
+    const q = query(collection(db, 'Classes'), where('t_id', '==', auth.currentUser.uid), where('class_name', '==', className));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach(async (doc) => {
+      await deleteDoc(doc.ref);
+    });
+    setData(prevData => prevData.filter(item => item !== className));
+  };
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => getColumnData(item)}>
-      <Text style={{ padding: 10, fontSize: 22, textAlign: 'center', textDecorationLine: 'underline' , flexDirection: 'column', justifyContent: 'center'}}>
-        {item}
-      </Text>
-      {selectedColumn === item && selectedColumnData && selectedColumnData[item] &&
-        Object.values(selectedColumnData[item]).map((value, index) => (
-          <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5, justifyContent: 'center' }}>
-            <TouchableOpacity onPress={() => removeItemFromFirestoreArray(item, value)}>
-              <FontAwesome name="remove" size={18} color="grey" />
-            </TouchableOpacity>
-            <Text>{value} </Text>
-          </View>
-        ))
-      }
-    </TouchableOpacity>
+    <View style={{ flexDirection: 'row' }}>
+      <TouchableOpacity onPress={() => navigation.navigate('ClassDetails', { className: item })}>
+        <Text style={{ padding: 10, fontSize: 22, textAlign: 'center', textDecorationLine: 'underline', flexDirection: 'column', justifyContent: 'center' }}>
+          {item}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handleDeleteStudents(item)}>
+        <MaterialIcons name="delete" size={24} color="black" />
+      </TouchableOpacity>
+
+      
+
+    </View>
   );
-  
+
   return (
     <View style={styles.allPage}>
       <Toolbar />
@@ -76,7 +74,12 @@ const MyClasses = (props) => {
           contentContainerStyle={{ alignItems: 'center' }}
         />
       </View>
-    
+
+
+      <TouchableOpacity style={styles.butt}  onPress={() => navigation.navigate('SetDetails')}>
+          <Text >הוסף כיתה</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={[styles.back, { marginTop: 'auto' }]} onPress={() => navigation.navigate('HomePage')}>
         <MaterialIcons name="navigate-next" size={24} color="black" />
         <Text>הקודם</Text>
@@ -84,6 +87,7 @@ const MyClasses = (props) => {
     </View>
   );
 };
+
 
 export default MyClasses;
 

@@ -1,30 +1,152 @@
-import { View, Text, TouchableOpacity, StyleSheet} from 'react-native'
-import React from 'react'
-import { MaterialIcons } from '@expo/vector-icons'; 
+import { View,Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native'
+import React, { useState } from 'react'
+import { useRoute } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons'; 
+import { RadioButton } from 'react-native-paper';
+import { Entypo } from '@expo/vector-icons'; 
+
+
+
+const names = ['תהל לוי עמדי', 'בר אסתר', 'לירון סולטן', 'משה שממה' , 'טליה לוי ', 'יוסי כהן'
+, 'אליאב שרון'  ];
 
 const Diet = () => {
+
 const navigation = useNavigation();
+  const route = useRoute();
 
+const [selectedOptions, setSelectedOptions] = useState({});
+const handleOptionSelect = (name, option) => {
+  setSelectedOptions({
+    ...selectedOptions,
+    [name]: option
+  });
+};
+
+const [selectedId, setSelectedId] = useState(null);
+
+const renderItem = ({ item }) => {
   return (
-    <View>
-      <Text>Diet</Text>
+    <TouchableOpacity onPress={() => setSelectedId(item.id)}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <RadioButton
+          value={item.id}
+          status={selectedId === item.id ? 'checked' : 'unchecked'}
+          onPress={() => setSelectedId(item.id)}
+        />
+        <Text>{item.name}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
-      <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('ReportPage')}>
-        <MaterialIcons name="navigate-next" size={24} color="black" />
-        <Text >הקודם</Text>
-      </TouchableOpacity>
-    </View>
-  )
+return (
+  <View>
+    <View style={styles.report}>
+      <Text style={{fontSize: 20, padding:10}}> צור/י דיווח חדש</Text>
+      <Ionicons name="create-outline" size={24} color="black" />
+      </View>
+
+      <View style={[{flexDirection: 'row', justifyContent:'space-around'}]}>
+        
+        <Text style={[{textAlign: 'right', fontWeight:'bold', fontSize: 16}]}>הערות</Text>
+        <Entypo name="emoji-sad" size={24} color="black" />
+        <Entypo name="emoji-neutral" size={24} color="black" />
+        <Entypo name="emoji-happy" size={24} color="black" />
+        <Text style={[{textAlign: 'right', fontWeight:'bold', fontSize: 16}]}>שם התלמיד/ה</Text>
+
+      </View>
+
+
+    <View style={styles.container}>
+    {names.map(name => (
+      <View key={name} style={styles.nameContainer}>
+        <Text style={styles.name}>{name}</Text>
+        <View style={styles.optionsContainer}>
+          <View style={styles.option}>
+            <RadioButton
+              value={'Option 1'}
+              status={selectedOptions[name] === 'Option 1' ? 'checked' : 'unchecked'}
+              onPress={() => handleOptionSelect(name, 'Option 1')}
+            />
+            {/* <Text>Option 1</Text> */}
+          </View>
+          <View style={styles.option}>
+            <RadioButton
+              value={'Option 2'}
+              status={selectedOptions[name] === 'Option 2' ? 'checked' : 'unchecked'}
+              onPress={() => handleOptionSelect(name, 'Option 2')}
+            />
+            {/* <Text>Option 2</Text> */}
+          </View>
+          <View style={styles.option}>
+            <RadioButton
+              value={'Option 3'}
+              status={selectedOptions[name] === 'Option 3' ? 'checked' : 'unchecked'}
+              onPress={() => handleOptionSelect(name, 'Option 3')}
+            />
+            {/* <Text>Option 3</Text> */}
+          </View>
+          <TextInput style={[{width: '-90%'}]}></TextInput>
+        </View>
+      </View>
+    ))}
+  </View>
+
+
+
+
+  </View>
+)
 }
 
 export default Diet
 
 
 const styles = StyleSheet.create({
-  back: {
-      padding:'30%'
-  }
- 
+  report: {
+      
+    flexDirection: 'row',
+    alignItems:'center',
+    textAlign:'right',
+    justifyContent: 'flex-end',
+  },
+  input: {
+    backgroundColor: 'white',
+    borderColor: '#e8e8e8',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    textAlign: 'rigth' ,
+    margin:'auto', 
+    padding:16,
+    marginTop:16,
+    width:300,
+    height: 50
+ },
+ container: {
+  padding: 16,
+},
+nameContainer: {
+  flexDirection: 'row-reverse',
+  // justifyContent: 'flex-end',
+  marginBottom: 16,
+  justifyContent:'space-around'
+
+},
+name: {
+  fontWeight: 'bold',
+  marginRight: 8,
+  color: 'red'
+},
+optionsContainer: {
+  flexDirection: 'row',
+  // alignItems: 'center'
+},
+option: {
+  flexDirection: 'row',
+  // alignItems: 'center',
+  marginRight: 8
+}
 });
 

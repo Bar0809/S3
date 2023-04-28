@@ -17,7 +17,7 @@ const myValue = route.params.param1;
 
 
   const [data, setData] = useState([
-      'א-1', 'א-3', 'ב-2', 'ג-1', 'ג-4', 'ד-2', 'ה-1', 'ו-3'
+      'א-1', 'א-2', 'ב-1', 'ב-2', 'ג-4', 'ד-2'
   ]);
 
   const renderItem = ({ item }) => (
@@ -46,7 +46,7 @@ const myValue = route.params.param1;
               />
           </View>
 
-          <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('ReportPage')}>
+          <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('HomePage')}>
               <MaterialIcons name="navigate-next" size={24} color="black" />
               <Text >הקודם</Text>
               </TouchableOpacity>

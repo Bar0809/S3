@@ -23,8 +23,8 @@ import Temp1 from './components/Temp1';
 import Temp2 from './components/Temp2';
 import ChooseClass from './components/ChooseClass';
 import ChooseStudent from './components/ChooseStudent';
-import Student from './components/Student'
-import Profile from './components/Profile'
+import Student from './components/Student';
+import Profile from './components/Profile';
 
 
 const Stack = createNativeStackNavigator();

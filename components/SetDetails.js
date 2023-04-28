@@ -1,52 +1,73 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native'
-import React from 'react'
-import {useState} from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert} from 'react-native'
+import React, { useState, useEffect } from 'react';
 import Toolbar from './Toolbar';
-import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons'; 
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from './firebase'
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
-import { doc, setDoc, updateDoc } from "firebase/firestore"; 
+import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore"; 
 import XLSX from 'xlsx';
-import { read, utils } from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
+
+
+
 const SetDetails = () => {
-const navigation = useNavigation();
+  const navigation = useNavigation();
+  const [firstInput, setFirstInput] = useState('');
+  const [textInputs, setTextInputs] = useState([]);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [schoolName, setSchoolName] = useState('');
+  const [documentIds, setDocumentIds] = useState([]);
+  const [showContent, setShowContent] = useState(false);
+  const [showCourses, setShowCourses] = useState(false);
+  const [className ,setclassName] = useState ('');
+  const [fileResponse, setFileResponse] = useState ('');
+  const [numInputs, setNumInputs] = useState(0);
+  const [inputValues, setInputValues] = useState([]);
 
-const [shouldShow, setShouldShow] = useState(false);
-const [firstInput, setFirstInput] = useState('');
-const [textInputs, setTextInputs] = useState([]);
-const [firstName, setFirstName] = useState('');
-const [lastName, setLastName] = useState('');
-const [schoolName, setSchoolName] = useState('');
+  const handleNumInputsChange = (value) => {
+    setNumInputs(value);
+    setInputValues(Array.from({ length: value }).map(() => ''));
+  };
 
-const [fileResponse, setFileResponse] = useState([]);
+  const handleInputChange = (value, index) => {
+    const newInputValues = [...inputValues];
+    newInputValues[index] = value;
+    setInputValues(newInputValues);
+  };
 
 
-  const handleFirstInput = (text) => {
-    setFirstInput(text);
-    if(!isNaN(text)){
-      setTextInputs(Array.from({length: parseInt(text)}, (_,i) => i));
-    }else{
-      setTextInputs([]);
-    }
+async function getDocuments() {
+  const q = query(collection(db, "Classes"), where("t_id", "==", auth.currentUser.uid));
+  const querySnapshot = await getDocs(q);
+  if (querySnapshot.empty) {
+    console.log("no documents");
+  } else {
+    const ids = [];
+    querySnapshot.forEach((doc) => {
+      if (!ids.includes(doc.id)) {
+        ids.push(doc.id);
+      }
+    });
+    setDocumentIds(ids);
   }
+}
 
-  const handleSubmit = async () => {
-    const DocRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(DocRef, {
-      first_name: firstName,
-      last_name: lastName,
-      school_name: lastName
-  }, { merge: true }).then(() => {
-    Alert.alert("קרה")
-  });
-  }
+useEffect(() => {
+  getDocuments();
+}, []);
+
+const handlePress = () => {
+  setShowContent(!showContent);
+};
+
+const handleCourses = () => {
+  setShowCourses(!showCourses);
+};
 
   const readExcelFile = async () => {
-    console.log(fileResponse['uri'])
     try {
       const { uri } = fileResponse;
       const fileContents = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
@@ -54,29 +75,57 @@ const [fileResponse, setFileResponse] = useState([]);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-      data[0].forEach((columnName, columnIndex) => {
-        const columnData = data.slice(1).map(row => row[columnIndex]);
-        const DocRef = doc(db, `users/${auth.currentUser.uid}/classes`, columnName);
-        setDoc(DocRef, {
-          [columnName]: columnData
-        }, { merge: true }).then(() => {
-          // Alert.alert("קרה")
-        });
-        const DocRefOne = doc(db, "users", auth.currentUser.uid);
-        setDoc(DocRefOne, {
-          first_name: firstName,
-          last_name: lastName,
-          school_name: schoolName,
+  
+      const columnData = data.slice(1).map(row => row[0]); // extract only the first column
+  
+      const studentsCollectionRef = collection(db, "Students");
+      const classesCollectionRef = collection(db, "Classes");
+      const coursesCollectionRef = collection(db, "Courses");
+      const docClassRef = doc(classesCollectionRef, className);
+      setDoc(docClassRef, {
+        t_id: auth.currentUser.uid,
+        class_name: className
       }, { merge: true }).then(() => {
-        // Alert.alert("קרה")
+        console.log("Document successfully written!");
+        console.log(inputValues)
+        inputValues.forEach((docId) => {
+          const docRef = doc(coursesCollectionRef, docId);
+          setDoc(docRef, {
+            class_id: className,
+            course_name: docId
+          }, { merge: true }).then(() => {
+            console.log("Document successfully written!");
+          }).catch((error) => {
+            console.error("Error writing document: ", error);
+          });
+        });
+      }).catch((error) => {
+        console.error("Error writing document: ", error);
       });
-      })
+      columnData.forEach((cellValue) => {
+        const docRef = doc(studentsCollectionRef, cellValue);
+        setDoc(docRef, {
+          class_id: className,
+          student_name: cellValue,
+          t_id: auth.currentUser.uid
+        }, { merge: true }).then(() => {
+          console.log("Document successfully written!");
+        }).catch((error) => {
+          console.error("Error writing document: ", error);
+        });
+      });
     } catch (error) {
       console.log(error);
     }
-    navigation.navigate('HomePage')
-  }
+    getDocuments();
+    handlePress();
+    handleCourses();
+    navigation.navigate('SetDetails')
+
+  
+  };
+
+
 
   
 
@@ -96,59 +145,58 @@ const [fileResponse, setFileResponse] = useState([]);
     <View style={styles.mainView} >
         <Toolbar/>
         <View style={styles.mainView}> 
-        <TextInput style={[styles.input, { textAlign: 'right' }]} placeholder='  שם פרטי:' value={firstName} onChangeText={text => setFirstName(text)}></TextInput>
-        <TextInput style={[styles.input, { textAlign: 'right' }]} placeholder=' שם משפחה:' value={lastName} onChangeText={text => setLastName(text)}></TextInput>
-        <TextInput style={[styles.input, { textAlign: 'right' }]} placeholder=' שם ביה"ס:' value={schoolName} onChangeText={text => setSchoolName(text)}></TextInput>
+          <Text>רשימת הכיתות שלי: </Text>
 
-
-        <TouchableOpacity style={styles.butt}  onPress={() => pickDocument()}>
-        <MaterialCommunityIcons  style={styles.icon} name="file-excel-outline" size={24} color="black" />
-        {/* <Ionicons style={styles.icon} name="create-outline" size={24} color="black" /> */}
-        <Text >בחר קובץ אקסל</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.butt}  onPress={() => readExcelFile()}>
-        <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
-        <Text >טען נתונים</Text>
-        </TouchableOpacity>
-
-        {shouldShow ? (
-        <View style={styles.classes}>
-          <TextInput style={[styles.input2, { textAlign: 'right' }]} placeholder='שם הכיתה: ' ></TextInput>
-          <TextInput style={[styles.input2, { textAlign: 'right' }]} keyboradType='numric' placeholder='  מספר מקצועות:'   value={firstInput} onChangeText={handleFirstInput }></TextInput>
-          {textInputs.map((_, index) => (
-            <TextInput style={[styles.input2, { textAlign: 'right' }]} key={index} placeholder='מקצוע: '></TextInput>
-          ))}
-
-          <Text style={styles.text}>נא לצרף קובץ אקסל עם שמות התלמידים בלבד</Text>
-          <Text style={[styles.text, { textAlign: 'center', textDecorationLine: 'underline' }]} >ראה/י דוגמא</Text>
-
-          <TouchableOpacity style={styles.butt}>
-            <AntDesign style={styles.icon} name='addfile' size={24} color={'black'}/>
-            <Text>הוסף קובץ</Text>
+       
+          <View>
+    {documentIds.map((id) => (
+      <Text key={id}>{id}</Text>
+    ))}
+  </View>
+          <TouchableOpacity style={styles.butt} onPress={handlePress}>
+                <MaterialCommunityIcons style={styles.icon} name="plus" size={24} color="black" />
+                <Text>הוסף כיתה</Text>
           </TouchableOpacity>
+              
+          {showContent && (<>
+            <TextInput style={[styles.input, { textAlign: 'right' }]} placeholder='  שם הכיתה:' value={className} onChangeText={text => setclassName(text)}/>
 
-        <View style={styles.row}>
-            <TouchableOpacity style={styles.butt1}>
-              <Text style={{ textAlign: 'center' }} onPress={() => navigation.navigate('HomePage')}>שמור שינויים</Text>
+            <TouchableOpacity style={styles.butt}  onPress={() => pickDocument()}>
+              <MaterialCommunityIcons  style={styles.icon} name="file-excel-outline" size={24} color="black" />
+              <Text >בחר קובץ אקסל</Text>
             </TouchableOpacity>
 
-            {/* <TouchableOpacity style={styles.butt1}>
-              <Text style={{ textAlign: 'center' }} onPress={() => navigation.navigate('SignUp')}>חזור</Text>
-            </TouchableOpacity> */}
+            <View>
+      <TextInput
+        style={styles.butt}
+        placeholder="Number of inputs"
+        keyboardType="numeric"
+        onChangeText={(value) => handleNumInputsChange(value)}
+      />
+      {showContent && (<>
+      {Array.from({ length: numInputs }).map((_, index) => (
+        <TextInput
+          key={index}
+          placeholder={`מקצוע ${index + 1}`}
+          onChangeText={(value) => handleInputChange(value, index)}
+        />
+      ))}
+      </>)}
+    </View>
+            <TouchableOpacity style={styles.butt}  onPress={() => readExcelFile()}>
+              <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
+              <Text >טען נתונים</Text>
+            </TouchableOpacity>
+         </>)}
 
-                
-            </View>
+         <TouchableOpacity style={styles.butt}  onPress={() => navigation.navigate('HomePage')}>
+              <Ionicons style={styles.icon} name="create-outline" size={24} color="black" />
+              <Text >דף הבית</Text>
+            </TouchableOpacity>
 
 
         </View>
-        ) : null}
-
-
-     
-       
        </View> 
-    </View>
   )
 }
 

@@ -12,144 +12,114 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 const HomePage = () => {
     const navigation = useNavigation();
-    const [buttonStates, setButtonStates] = useState({});
-    const [textColor1, setTextColor1] = useState("black");
-    const [textColor2, setTextColor2] = useState("black");
-    const [textColor3, setTextColor3] = useState("black");
-    const [textColor4, setTextColor4] = useState("black");
-    const [textColor5, setTextColor5] = useState("black");
 
 
-
-    const handlePress = (id) => {
-        LayoutAnimation.configureNext({
-          duration: 500,
-          update: {
-            type: LayoutAnimation.Types.spring,
-            springDamping: 0.7,
-          },
-        });
-        setButtonStates({...buttonStates, [id]: {size: 1.2}});
-        if(id === 1){
-            setTimeout(()=> {
-                setTextColor1("black");
-                navigation.navigate('MyClasses');
-                setButtonStates({...buttonStates, [id]: {size: 1}});
-
-            }, 500);
-        }
-        else if(id===2){
-            setTextColor2("black");
-            navigation.navigate('ReportPage');
-            setButtonStates({...buttonStates, [id]: {size: 1}});
-
-        }
-        else if(id===3){
-            setTextColor3("black");
-            navigation.navigate('GraphsNData');
-            setButtonStates({...buttonStates, [id]: {size: 1}});
-
-        }
-        else if (id==4){
-            setTextColor4("black");
-            navigation.navigate('Gallery');
-            setButtonStates({...buttonStates, [id]: {size: 1}});
-
-        }
-        else {
-            setTextColor5("black");
-            navigation.navigate('Profile');
-            setButtonStates({...buttonStates, [id]: {size: 1}});
-        }
-      }
-
-  
   return (
-        <View style={[{ justifyContent: 'center', alignItems: 'center'}]}>
+    <View style={styles.allPage}>
         <Toolbar/>
-        <View style={styles.butt}>
-            <Animated.View style={{transform: [{ scale: buttonStates[1]?.size || 1 }],}}>
-                <TouchableOpacity style={styles.circle} onPress={()=> handlePress(1)}>
-                    <FontAwesome name="users" size={24} color="black" />
-                    <Text style={[styles.text, {color: textColor1}]}>הכיתות שלי</Text> 
-                </TouchableOpacity>
-            </Animated.View>
 
-            <Animated.View style={[{paddingTop:20},{transform: [{ scale: buttonStates[2]?.size || 1 }],}]}>
-                <TouchableOpacity style={styles.circle} onPress={()=> handlePress(2)}>
-                    <MaterialIcons name="update" size={26} color="black" />
-                    <Text style={[styles.text, {color: textColor2}]}>דיווח</Text> 
-                </TouchableOpacity>
-            </Animated.View>
-            
-            <Animated.View style={[{paddingTop:20},{transform: [{ scale: buttonStates[3]?.size || 1 }],}]}>
-                <TouchableOpacity style={styles.circle} onPress={()=> handlePress(3)}>
-                    <Foundation name="graph-bar" size={24} color="black"  />
-                    <Text style={[styles.text, {color: textColor3}]}>נתוני הכיתות</Text>
-                </TouchableOpacity>
-            </Animated.View>
-
-            <Animated.View style={[{paddingTop:20},{transform: [{ scale: buttonStates[4]?.size || 1 }],}]}>
-                <TouchableOpacity style={styles.circle} onPress={()=> handlePress(4)}>
-                    <MaterialCommunityIcons name="view-gallery-outline" size={24} color="black" />
-                    <Text style={[styles.text, {color: textColor4}]}>גלריה</Text>
-                </TouchableOpacity>
-            </Animated.View>
-
-            <Animated.View style={[{paddingTop:20},{transform: [{ scale: buttonStates[5]?.size || 1 }],}]}>
-                <TouchableOpacity style={styles.circle} onPress={()=> handlePress(5)}>
-                    <MaterialIcons name="history-edu" size={24} color="black" />
-                    <Text style={[styles.text, {color: textColor4}]}>איזור אישי</Text>
-                </TouchableOpacity>
-            </Animated.View>
-
-           
+        <View style={styles.title}>  
+            <Text style={styles.pageTitle}>דיווח: </Text>         
+            <MaterialIcons name="update" size={50} color="black" />
         </View>
 
-    
+        <View style={styles.loc}>
+            <View style={styles.row}>
+                <TouchableOpacity  style={[styles.butt, { backgroundColor:'#f6f9ff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'ציונים'})}>
+                    <Text style={styles.text}>ציונים</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#ecf2ff' }]} onPress={() => navigation.navigate('ChooseClass' , {param1:'נוכחות'})}>
+                    <Text style={styles.text}>נוכחות</Text>
+                </TouchableOpacity>
+
+
+
+            </View>
+        </View>
+
+        <View style={styles.loc}>
+            <View style={styles.row}>
+            <TouchableOpacity style={[styles.butt, { backgroundColor:'#e3ecff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'מצב חברתי'})}>
+                    <Text style={styles.text}>מצב חברתי</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#dae5ff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'מצב נפשי'})}>
+                    <Text style={styles.text}>מצב רוח</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+
+        <View style={styles.loc}>
+            <View style={styles.row}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#bed2fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'נראות'})}>
+                    <Text style={styles.text}>נראות</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#b5ccfe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'תזונה'})}>
+                    <Text style={styles.text}>תזונה</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+
+        <View style={styles.loc}>
+            <View style={styles.row}>
+        
+
+            <TouchableOpacity style={[styles.butt, { backgroundColor:'#c7d9fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'אירועים שונים'})}>
+                <Text style={styles.text}>אירועים מיוחדים</Text>
+            </TouchableOpacity>
+            </View>
+        </View>
+
+
     </View>
   );
-};
+}
+
+const styles = StyleSheet.create({
+    allPage: {
+        flex:1,
+        alignItems: 'center',
+        
+        
+    },
+     title: {
+          flexDirection:'row',
+         justifyContent:'space-around',
+         alignItems:'center',
+         
+     },
+    pageTitle:{
+        color:'black',
+        fontSize:60,
+        fontWeight:'bold',
+        padding:10,
+    },
+    row:{
+        flexDirection:'row',  
+        justifyContent: 'space-around'
+    },
+    butt:{
+        borderRadius:20,
+        width: 180,
+        height: 65,
+        marginHorizontal: 30,
+        borderWidth:1,
+    },
+    text: {
+        fontSize:30,
+        textAlign: 'center',
+        padding:10
+    },
+    loc:{
+        paddingTop:30,
+    },
+    back: {
+        padding:'30%'
+    }
+   
+
+});
 
 export default HomePage;
-
-const styles=StyleSheet.create({
-row: {
-    flexDirection:'row',
-    textAlign:'center',
-    justifyContent:'space-around',
-    paddingTop:20,
-},
-text:{
-    fontSize:24,
-    textAlign:'center',
-    justifyContent:'center',
-    fontWeight:'bold'
-},
-container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circle: {
-    // height: 100, 
-    height:90,
-    width: 150, 
-    borderRadius: 40, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    backgroundColor: 'white',
-    borderWidth:1,
-    borderColor: '#1E90FF',
-    top:20,
-    
-  },
-  butt: {
-    justifyContent:'center',
-    // paddingTop:40,
-
-  }
-
-
-}
-);
