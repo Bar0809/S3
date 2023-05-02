@@ -1,31 +1,45 @@
 import { View, Text , StyleSheet, TouchableOpacity, FlatList, SectionList} from 'react-native'
-import React , { useState } from 'react'
+import React , { useState, useEffect } from 'react'
 import { MaterialIcons } from '@expo/vector-icons'; 
 import { useNavigation } from '@react-navigation/native';
 import Toolbar from './Toolbar';
 import { FontAwesome } from '@expo/vector-icons'; 
 import { useRoute } from '@react-navigation/native';
-
-
+import { auth, db } from './firebase';
+import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 
 const ChooseClass = (props) => {
+  console.log(props.route.params.param1)
+  const navigation = useNavigation();
+  const [data, setData] = useState([]);
 
-const navigation = useNavigation();
-const route = useRoute();
-const myValue = route.params.param1;
+  const getClasses = async () => {
+    const q = query(collection(db, 'Classes'), where('t_id', '==', auth.currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    const classNames = [];
+    querySnapshot.forEach((doc) => {
+      classNames.push(doc.id);
+    });
+    setData(classNames);
+  };
 
-
-  const [data, setData] = useState([
-      'א-1', 'א-2', 'ב-1', 'ב-2', 'ג-4', 'ד-2'
-  ]);
+  useEffect(() => {
+    getClasses().catch(console.error);
+  }, []);
+  
 
   const renderItem = ({ item }) => (
-  <Text style={{ padding: 10, fontSize: 22, textAlign:'right', textDecorationLine: 'underline' }}
-      onPress={() => navigation.navigate('ChooseStudent', { 
-        param1: myValue, param2: item })}>{item}</Text>
-
+    <View style={{ flexDirection: 'row' }}>
+      <TouchableOpacity onPress={() => navigation.navigate('ChooseCourse', { reported: props.route.params.param1, className: item })}>
+        <Text style={{ padding: 10, fontSize: 22, textAlign: 'center', textDecorationLine: 'underline', flexDirection: 'column', justifyContent: 'center' }}>
+          {item}
+        </Text>
+      </TouchableOpacity>
+      
+    </View>
   );
+
 
   return (
       <View tyle={styles.allPage}>
@@ -36,14 +50,17 @@ const myValue = route.params.param1;
               <Text style={styles.pageTitle}>הכיתות שלי:</Text>
           </View>
 
+          
+
           <Text style={styles.subTitle}> בחר/י את הכיתה הרצויה</Text>
       
           <View>
               <FlatList
-                  data={data}
-                  renderItem={renderItem}
-                  keyExtractor={(item, index) => item + index}
-              />
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => item + index}
+          contentContainerStyle={{ alignItems: 'center', position: 'relative'}}
+        />
           </View>
 
           <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('HomePage')}>

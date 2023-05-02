@@ -1,86 +1,57 @@
-import { View, Text , StyleSheet, TouchableOpacity, FlatList, SectionList, ScrollView} from 'react-native'
-import React , { useState } from 'react'
-import { MaterialIcons } from '@expo/vector-icons'; 
+import { View, Text , StyleSheet, TouchableOpacity, FlatList } from 'react-native'
+import React , { useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native';
 import Toolbar from './Toolbar';
-import { FontAwesome } from '@expo/vector-icons';  
+import { FontAwesome } from '@expo/vector-icons'; 
 import { useRoute } from '@react-navigation/native';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from './firebase';
 
 
-
-const ChooseStudent = () => {
-const navigation = useNavigation();
-const route = useRoute();
-
-const type = route.params.param1;
-const course= route.params.param2;
+const ChooseStudent = ({ route }) => {
+    const { className } = route.params;
+    const [students, setStudents] = useState([]);
+    const navigation = useNavigation();
 
 
-const names = ['תהל לוי עמדי', 'בר אסתר', 'לירון סולטן', 'משה שממה' , 'טליה לוי ', 'יוסי כהן'
-, 'אליאב שרון' , 'נויה עמוס' , 'רחמים ליה', 'דניאל אור' , 'שטראוס זוהר' , 'נעם כהן'];
+    useEffect(() => {
+        const getStudents = async () => {
+          const q = query(collection(db, 'Students'), where('class_id', '==', className));
+          const querySnapshot = await getDocs(q);
+          const students = querySnapshot.docs.map(doc => ({ id: doc.id, type: 'student', ...doc.data() }));
+          setStudents(students);
+      };
+      console.log(students);
+        getStudents();
+      
+      }, []);
 
-const courses= ['תורה', 'עברית', 'חשבון' , 'חינוך'];
-
-
-
-
-const sortedCourses = courses.sort((a, b) => {
-    for (let i = 0; i < a.length; i++) {
-        if (a.charCodeAt(i) !== b.charCodeAt(i)) {
-            return a.charCodeAt(i) - b.charCodeAt(i);
-        }
+      const renderItem = ({ item }) => {
+        return (
+            <View style={styles.listItem}>
+                <TouchableOpacity onPress={() => navigation.navigate('ChooseStudent', { courseName: item.course_name })}>
+                <Text style={styles.courseName}>{item.course_name}</Text>
+                </TouchableOpacity>
+            </View>
+        );
     }
-});
-
-const sections = sortedCourses.reduce((acc, name) => {
-    const letter = courses[0];
-    if (!acc[letter]) {
-        acc[letter] = { title: letter, data: [] };
-    }
-    acc[letter].data.push(name);
-    return acc;
-}, {});
-
-const renderItem = ({ item }) => (
-    <Text style={{ padding: 10, fontSize: 18 , textAlign: 'right'}}
-    onPress={() => navigation.navigate('Student', { 
-        param1: type, param2: course , param3: item})}>{item}</Text>
-);
-
-const renderSectionHeader = ({ section }) => (
-    <Text style={{ padding: 10, fontWeight: 'bold', fontSize: 22, textAlign: 'right', textDecorationLine: 'underline' }}>
-        {section.title}
-    </Text>
-);
-
-const sectionsArr = Object.values(sections);
 
 
-  return (
-    <ScrollView>
-        <View style={styles.allPage}>
-            <Toolbar/>
+    return (
+        <View>
+            <Toolbar />
             <View style={styles.title}>
-                <FontAwesome name="users" size={40} color="black" style={[{paddingLeft:-50}]}/>
-                <Text style={styles.pageTitle}>{course}</Text>
+                <Text style={styles.pageTitle}>{className}</Text>
+                <FontAwesome name="users" size={30} color="black" style={[{ paddingLeft: -50 }]} />
             </View>
-
-            <Text style={styles.subTitle}> בחר/י את המקצוע הרצוי</Text>
-
-
-            <View>
-                <SectionList sections={sectionsArr} renderItem={renderItem} 
-                keyExtractor={(item, index) => item.id || index.toString()}/>
-            </View>
-
-            <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('ReportPage')}>
-                <MaterialIcons name="navigate-next" size={24} color="black" />
-                <Text >חזור</Text>
-        </TouchableOpacity>
+            <Text style={styles.subTitle}>בחר/י את התלמיד/ה הרצוי/ה</Text>
+            <FlatList
+                data={students}
+                renderItem={renderItem}
+                keyExtractor={item => item.id}
+            />
         </View>
-    </ScrollView>
-
-  )
+  );
 }
 
 export default ChooseStudent

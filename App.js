@@ -13,19 +13,20 @@ import Gallery from './components/Gallery';
 import SpecificClass from './components/SpecificClass';
 import Presence from './components/Presence';
 import Scores from './components/Scores';
-import MentalState from './components/MentalState';
+import Mood from './components/Mood';
 import FriendStatus from './components/FriendStatus';
 import Events from './components/Events';
 import Violence from './components/Violence';
 import Diet from './components/Diet';
-import Visibility from './components/Visibility';
+import Appearances from './components/Appearances';
 import Temp1 from './components/Temp1';
 import Temp2 from './components/Temp2';
 import ChooseClass from './components/ChooseClass';
 import ChooseStudent from './components/ChooseStudent';
 import Student from './components/Student';
 import Profile from './components/Profile';
-
+import ClassDetails from './components/ClassDetails';
+import ChooseCourse from './components/ChooseCourse';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,19 +46,20 @@ function App() {
         <Stack.Screen name="SpecificClass" component={SpecificClass}/>
         <Stack.Screen name="Presence" component={Presence}/>
         <Stack.Screen name="Scores" component={Scores}/>
-        <Stack.Screen name="MentalState" component={MentalState}/>
+        <Stack.Screen name="Mood" component={Mood}/>
         <Stack.Screen name="FriendStatus" component={FriendStatus}/>
         <Stack.Screen name="Events" component={Events}/>
         <Stack.Screen name="Violence" component={Violence}/>
         <Stack.Screen name="Diet" component={Diet}/>
-        <Stack.Screen name="Visibility" component={Visibility}/>
+        <Stack.Screen name="Appearances" component={Appearances}/>
         <Stack.Screen name="Temp1" component={Temp1}/>
         <Stack.Screen name="Temp2" component={Temp2}/>
         <Stack.Screen name="ChooseClass" component={ChooseClass}/>
         <Stack.Screen name="ChooseStudent" component={ChooseStudent}/>
         <Stack.Screen name="Student" component={Student}/>
         <Stack.Screen name="Profile" component={Profile}/>
-
+        <Stack.Screen name="ClassDetails" component={ClassDetails}/>
+        <Stack.Screen name="ChooseCourse" component={ChooseCourse}/>
 
       </Stack.Navigator>
     </NavigationContainer>

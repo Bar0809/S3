@@ -4,7 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 
-const Visibility = () => {
+const Appearances = () => {
   const navigation = useNavigation();
 
 
@@ -20,7 +20,7 @@ const Visibility = () => {
   )
 }
 
-export default Visibility
+export default Appearances
 
 
 const styles = StyleSheet.create({

@@ -18,7 +18,7 @@ const navigation = useNavigation();
       const user = await signInWithEmailAndPassword(auth,email,password );
       navigation.navigate("HomePage");
     } catch (error) {
-      Alert.alert('אופס',error.message);
+      Alert.alert('אופס', 'כתובת המייל ו/או הסיסמה שגויים, אנא נסה/י שוב');
     }
   };
 

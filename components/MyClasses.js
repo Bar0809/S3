@@ -11,6 +11,8 @@ const MyClasses = (props) => {
   const navigation = useNavigation();
 
   const [data, setData] = useState([]);
+  const [students, setStudents] = useState([]);
+
 
   const getClasses = async () => {
     const q = query(collection(db, 'Classes'), where('t_id', '==', auth.currentUser.uid));
@@ -66,20 +68,20 @@ const MyClasses = (props) => {
         <Text style={styles.pageTitle}> הכיתות שלי:</Text>
         <FontAwesome name="users" size={30} color="black" style={[{ paddingLeft: -50 }]} />
       </View>
+      
       <View>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SetDetails')}>
+    <Text style={styles.buttonText}>הוסף כיתה</Text>
+  </TouchableOpacity>
         <FlatList
           data={data}
           renderItem={renderItem}
           keyExtractor={(item, index) => item + index}
-          contentContainerStyle={{ alignItems: 'center' }}
+          contentContainerStyle={{ alignItems: 'center', position: 'relative'}}
         />
+
       </View>
-
-
-      <TouchableOpacity style={styles.butt}  onPress={() => navigation.navigate('SetDetails')}>
-          <Text >הוסף כיתה</Text>
-      </TouchableOpacity>
-
+      
       <TouchableOpacity style={[styles.back, { marginTop: 'auto' }]} onPress={() => navigation.navigate('HomePage')}>
         <MaterialIcons name="navigate-next" size={24} color="black" />
         <Text>הקודם</Text>
@@ -93,7 +95,7 @@ export default MyClasses;
 
 const styles = StyleSheet.create({
   allPage: {
-    flex: 1,
+   // flex: 1,
     alignItems: 'center',
   },
   title: {
@@ -110,5 +112,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
     opacity: 0.7,
+    marginTop: 'auto'
+  }
+  ,
+   butt: {
+    backgroundColor: '#90EE90',
+    borderRadius: 50,
+    // padding: 20,
+    width: '100%',
+    // top: 20,
+    // marginBottom: 10,
+  },
+  butt1: {
+    backgroundColor: '#90EE90',
+    borderRadius: 50,
+    padding: 20,
+    width: '80%',
+    top: 20,
+    marginTop: 'auto',
+    bottom: 30,
+  },
+  button: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    height: 50,
+    width: '80%',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#000',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });

@@ -25,11 +25,11 @@ const HomePage = () => {
 
         <View style={styles.loc}>
             <View style={styles.row}>
-                <TouchableOpacity  style={[styles.butt, { backgroundColor:'#f6f9ff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'ציונים'})}>
+                <TouchableOpacity  style={[styles.butt, { backgroundColor:'#f6f9ff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'Scores'})}>
                     <Text style={styles.text}>ציונים</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.butt, { backgroundColor:'#ecf2ff' }]} onPress={() => navigation.navigate('ChooseClass' , {param1:'נוכחות'})}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#ecf2ff' }]} onPress={() => navigation.navigate('ChooseClass' , {param1:'Presence'})}>
                     <Text style={styles.text}>נוכחות</Text>
                 </TouchableOpacity>
 
@@ -40,11 +40,11 @@ const HomePage = () => {
 
         <View style={styles.loc}>
             <View style={styles.row}>
-            <TouchableOpacity style={[styles.butt, { backgroundColor:'#e3ecff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'מצב חברתי'})}>
+            <TouchableOpacity style={[styles.butt, { backgroundColor:'#e3ecff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'FriendStatus'})}>
                     <Text style={styles.text}>מצב חברתי</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.butt, { backgroundColor:'#dae5ff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'מצב נפשי'})}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#dae5ff' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'Mood'})}>
                     <Text style={styles.text}>מצב רוח</Text>
                 </TouchableOpacity>
             </View>
@@ -52,11 +52,11 @@ const HomePage = () => {
 
         <View style={styles.loc}>
             <View style={styles.row}>
-                <TouchableOpacity style={[styles.butt, { backgroundColor:'#bed2fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'נראות'})}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#bed2fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'Appearances'})}>
                     <Text style={styles.text}>נראות</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.butt, { backgroundColor:'#b5ccfe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'תזונה'})}>
+                <TouchableOpacity style={[styles.butt, { backgroundColor:'#b5ccfe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'Diet'})}>
                     <Text style={styles.text}>תזונה</Text>
                 </TouchableOpacity>
             </View>
@@ -66,7 +66,7 @@ const HomePage = () => {
             <View style={styles.row}>
         
 
-            <TouchableOpacity style={[styles.butt, { backgroundColor:'#c7d9fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'אירועים שונים'})}>
+            <TouchableOpacity style={[styles.butt, { backgroundColor:'#c7d9fe' }]} onPress={() => navigation.navigate('ChooseClass', {param1:'Events'})}>
                 <Text style={styles.text}>אירועים מיוחדים</Text>
             </TouchableOpacity>
             </View>

@@ -3,7 +3,7 @@ import React from 'react'
 import { MaterialIcons } from '@expo/vector-icons'; 
 import { useNavigation } from '@react-navigation/native';
 
-const MentalState = () => {
+const Mood = () => {
   const navigation = useNavigation();
 
 
@@ -20,7 +20,7 @@ const MentalState = () => {
   )
 }
 
-export default MentalState
+export default Mood
 
 
 const styles = StyleSheet.create({

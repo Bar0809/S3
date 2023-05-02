@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from './firebase'
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
-import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore"; 
+import { doc, setDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore"; 
 import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
@@ -14,11 +14,6 @@ import * as DocumentPicker from 'expo-document-picker';
 
 const SetDetails = () => {
   const navigation = useNavigation();
-  const [firstInput, setFirstInput] = useState('');
-  const [textInputs, setTextInputs] = useState([]);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [schoolName, setSchoolName] = useState('');
   const [documentIds, setDocumentIds] = useState([]);
   const [showContent, setShowContent] = useState(false);
   const [showCourses, setShowCourses] = useState(false);
@@ -39,21 +34,22 @@ const SetDetails = () => {
   };
 
 
-async function getDocuments() {
-  const q = query(collection(db, "Classes"), where("t_id", "==", auth.currentUser.uid));
-  const querySnapshot = await getDocs(q);
-  if (querySnapshot.empty) {
-    console.log("no documents");
-  } else {
-    const ids = [];
-    querySnapshot.forEach((doc) => {
-      if (!ids.includes(doc.id)) {
-        ids.push(doc.id);
-      }
-    });
-    setDocumentIds(ids);
+  async function getDocuments() {
+    const q = query(collection(db, "Classes"), where("t_id", "==", auth.currentUser.uid));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      console.log("no documents");
+    } else {
+      const names = [];
+      querySnapshot.forEach((doc) => {
+        if (!names.includes(doc.data().class_name)) {
+          names.push(doc.data().class_name);
+        }
+      });
+      setDocumentIds(names);
+    }
   }
-}
+  
 
 useEffect(() => {
   getDocuments();
@@ -67,65 +63,77 @@ const handleCourses = () => {
   setShowCourses(!showCourses);
 };
 
-  const readExcelFile = async () => {
-    try {
-      const { uri } = fileResponse;
-      const fileContents = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-      const workbook = XLSX.read(fileContents, { type: 'base64' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-  
-      const columnData = data.slice(1).map(row => row[0]); // extract only the first column
-  
-      const studentsCollectionRef = collection(db, "Students");
-      const classesCollectionRef = collection(db, "Classes");
-      const coursesCollectionRef = collection(db, "Courses");
-      const docClassRef = doc(classesCollectionRef, className);
-      setDoc(docClassRef, {
+
+const readExcelFile = async () => {
+  try {
+    const { uri } = fileResponse;
+    const fileContents = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+    const workbook = XLSX.read(fileContents, { type: 'base64' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    const columnData = data.slice(1).map(row => row[0]); // extract only the first column
+
+    const classesCollectionRef = collection(db, "Classes");
+    const coursesCollectionRef = collection(db, "Courses");
+    const studentsCollectionRef = collection(db, "Students");
+
+    const classDoc = {
+      t_id: auth.currentUser.uid,
+      class_name: className
+    };
+
+    const classRef = await addDoc(classesCollectionRef, classDoc);
+    const classId = classRef.id;
+
+    console.log("Class document successfully written!");
+    console.log(inputValues);
+
+    const coursePromises = inputValues.map((docId) => {
+      const courseDoc = {
+        class_id: classId,
+        course_name: docId,
+        t_id: auth.currentUser.uid
+      };
+
+      return addDoc(coursesCollectionRef, courseDoc)
+        .then((docRef) => {
+          console.log("Course document successfully written!");
+        })
+        .catch((error) => {
+          console.error("Error writing course document: ", error);
+        });
+    });
+
+    await Promise.all(coursePromises);
+
+    const studentPromises = columnData.map((cellValue) => {
+      const studentDoc = {
         t_id: auth.currentUser.uid,
-        class_name: className
-      }, { merge: true }).then(() => {
-        console.log("Document successfully written!");
-        console.log(inputValues)
-        inputValues.forEach((docId) => {
-          const docRef = doc(coursesCollectionRef, docId);
-          setDoc(docRef, {
-            class_id: className,
-            course_name: docId
-          }, { merge: true }).then(() => {
-            console.log("Document successfully written!");
-          }).catch((error) => {
-            console.error("Error writing document: ", error);
-          });
+        student_name: cellValue,
+        class_id: classId
+      };
+
+      return addDoc(studentsCollectionRef, studentDoc)
+        .then((docRef) => {
+          console.log("Student document successfully written!");
+        })
+        .catch((error) => {
+          console.error("Error writing student document: ", error);
         });
-      }).catch((error) => {
-        console.error("Error writing document: ", error);
-      });
-      columnData.forEach((cellValue) => {
-        const docRef = doc(studentsCollectionRef, cellValue);
-        setDoc(docRef, {
-          class_id: className,
-          student_name: cellValue,
-          t_id: auth.currentUser.uid
-        }, { merge: true }).then(() => {
-          console.log("Document successfully written!");
-        }).catch((error) => {
-          console.error("Error writing document: ", error);
-        });
-      });
-    } catch (error) {
-      console.log(error);
-    }
+    });
+
+    await Promise.all(studentPromises);
+
     getDocuments();
     handlePress();
     handleCourses();
-    navigation.navigate('SetDetails')
-
-  
-  };
-
-
+    navigation.navigate("SetDetails");
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   
 
@@ -146,13 +154,13 @@ const handleCourses = () => {
         <Toolbar/>
         <View style={styles.mainView}> 
           <Text>רשימת הכיתות שלי: </Text>
+          <View>
+  {documentIds.map((name) => (
+    <Text key={name}>{name}</Text>
+  ))}
+</View>
 
        
-          <View>
-    {documentIds.map((id) => (
-      <Text key={id}>{id}</Text>
-    ))}
-  </View>
           <TouchableOpacity style={styles.butt} onPress={handlePress}>
                 <MaterialCommunityIcons style={styles.icon} name="plus" size={24} color="black" />
                 <Text>הוסף כיתה</Text>
