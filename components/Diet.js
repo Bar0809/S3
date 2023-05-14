@@ -1,102 +1,258 @@
-import { View,Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native'
-import React, { useState } from 'react'
-import { useRoute } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, Alert } from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons'; 
+import { Ionicons } from '@expo/vector-icons';
+import Toolbar from './Toolbar';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { db } from './firebase';
 import { RadioButton } from 'react-native-paper';
 import { Entypo } from '@expo/vector-icons'; 
 
 
 
-const names = ['תהל לוי עמדי', 'בר אסתר', 'לירון סולטן', 'משה שממה' , 'טליה לוי ', 'יוסי כהן'
-, 'אליאב שרון'  ];
 
-const Diet = () => {
+const Diet = ({ route }) => {
+  const navigation = useNavigation();
+  const { classId } = route.params;
+  const { course_id } = route.params;
 
-const navigation = useNavigation();
-  const route = useRoute();
 
-const [selectedOptions, setSelectedOptions] = useState({});
-const handleOptionSelect = (name, option) => {
-  setSelectedOptions({
-    ...selectedOptions,
-    [name]: option
-  });
-};
+  const [selectedValues, setSelectedValues] = useState({});
+  const [students, setStudents] = useState([]);
+  const [dateString, setDateString] = useState('');
+  const [freeText, setFreeText] = useState ([]);
+  const [validDate, setValidDate] = useState(false);
 
-const [selectedId, setSelectedId] = useState(null);
+  useEffect(() => {
+    const getStudents = async () => {
+      const q = query(collection(db, 'Students'), where('class_id', '==', classId));
+      const querySnapshot = await getDocs(q);
+      const data = [];
+      querySnapshot.forEach(doc => {
+        data.push({ ...doc.data(), id: doc.id });
+      });
+      setStudents(data);
+    };
+    getStudents();
+  }, []);
 
-const renderItem = ({ item }) => {
-  return (
-    <TouchableOpacity onPress={() => setSelectedId(item.id)}>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <RadioButton
-          value={item.id}
-          status={selectedId === item.id ? 'checked' : 'unchecked'}
-          onPress={() => setSelectedId(item.id)}
-        />
-        <Text>{item.name}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
+  const createReport = async () => {
+    const selectedValuesArray = Object.values(selectedValues);
+    if (selectedValuesArray.length < students.length) {
+      Alert.alert('שגיאה', 'חסר שדות');
+      return;
+    }
+  
+    const allSelected = selectedValuesArray.every((val) => val !== undefined);
+  
+    if (!validDate) {
+      Alert.alert('שגיאה', 'התאריך שהוזן לא תקין');
+      return;
+    }
+  
+    if (!validDate || !allSelected) {
+      Alert.alert('שגיאה', 'חסר שדות');
+      return;
+    }
+  
+    // Set empty strings for undefined freeText values
+    for (let i = 0; i < students.length; i++) {
+      if (freeText[i] === undefined) {
+        freeText[i] = '';
+      }
+    }
+  
+    // Check if a document with the same date and course_id exists
+    const q = query(collection(db, 'Diet'), where('date', '==', dateString), where('course_id', '==', course_id));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.size > 0) {
+      Alert.alert(
+        'Add report',
+        'Note that there is an attendance report for this course on the above date. Do you want to continue?',
+        [
+          { text: 'No', onPress: () => navigation.navigate('HomePage'), style: 'cancel' },
+          {
+            text: 'Yes', onPress: async () => {
+              const dietData = students.map((student, i) => {
+                return {
+                  course_id: course_id,
+                  class_id: classId,
+                  date: dateString,
+                  diet: selectedValues[student.id],
+                  s_id: student.id,
+                  note: freeText[i],
+                };
+              });
+  
+              try {
+                await Promise.all(dietData.map((data) => addDoc(collection(db, 'Diet'), data)));
+                console.log('Documents written successfully');
+                Alert.alert('', 'דו"ח התזונה הוגש בהצלחה!')
+                navigation.navigate("HomePage");
+              } catch (e) {
+                console.log(e);
+              }
+  
+  
+            }
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+  
+    else {
+      const dietData = students.map((student, i) => {
+        return {
+          course_id: course_id,
+          class_id: classId,
+          date: dateString,
+          diet: selectedValues[student.id],
+          s_id: student.id,
+          note: freeText[i],
+        };
+      });
+  
+      try {
+        await Promise.all(dietData.map((data) => addDoc(collection(db, 'Diet'), data)));
+        console.log('Documents written successfully');
+        Alert.alert('', 'דו"ח התזונה הוגש בהצלחה!')
+  
+  
+        navigation.navigate("HomePage");
+  
+  
+      } catch (e) {
+        console.log(e);
+      }
+  
+    }
+  
+  
+  };
+  
+
+  const handleChangeText = (text) => {
+    setDateString(text);
+    setValidDate(parseDateString(text, 'dd/mm/yyyy'));
+  };
+
+  function parseDateString(inputString) {
+    const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    const match = inputString.match(dateRegex);
+
+    if (!match) {
+      return null;
+    }
+
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
+    const year = parseInt(match[3], 10);
+
+    // Check if the date is valid
+    const date = new Date(year, month, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
+      return null;
+    }
+
+    // Check if the month is valid
+    if (month > 11) {
+      return null;
+    }
+
+    // Check if the day is valid for the given month and year
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+    if (day > lastDayOfMonth) {
+      return null;
+    }
+
+    // Check if the date is within the desired range
+    const currentDate = new Date();
+    const minDate = new Date('2023-01-01');
+    if (date < minDate || date > currentDate) {
+      return null;
+    }
+
+    return date;
+  }
+
+  const handleFreeTextChange = (text, index) => {
+    const newFreeText = [...freeText];
+    newFreeText[index] = text;
+    setFreeText(newFreeText);
+  }
+
 
 return (
   <View>
+    <Toolbar />
     <View style={styles.report}>
-      <Text style={{fontSize: 20, padding:10}}> צור/י דיווח חדש</Text>
+      <Text style={{ fontSize: 20, padding: 10 }}> צור/י דיווח חדש</Text>
       <Ionicons name="create-outline" size={24} color="black" />
-      </View>
+    </View>
 
-      <View style={[{flexDirection: 'row', justifyContent:'space-around'}]}>
-        
-        <Text style={[{textAlign: 'right', fontWeight:'bold', fontSize: 16}]}>הערות</Text>
-        <Entypo name="emoji-sad" size={24} color="black" />
-        <Entypo name="emoji-neutral" size={24} color="black" />
-        <Entypo name="emoji-happy" size={24} color="black" />
-        <Text style={[{textAlign: 'right', fontWeight:'bold', fontSize: 16}]}>שם התלמיד/ה</Text>
+    <View>
+      <Text>תאריך</Text>
+      <TextInput style={[styles.input, { textAlign: 'right' }]} value={dateString} onChangeText={handleChangeText} placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)" />
+      {validDate ? (
+        <Text style={{ color: 'green' }}>Correct date</Text>
+      ) : (
+        <Text style={{ color: 'red' }}>Incorrect date</Text>
+      )}
+    </View>
 
-      </View>
+    <View style={[{ flexDirection: 'row', justifyContent: 'space-around' }]}>
+      <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 16 }]}>הערות -לא חובה</Text>
+      
+      <Entypo name="emoji-sad" size={24} color="black" />
+      <Entypo name="emoji-happy" size={24} color="black" />
+      <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 16 }]}>שם התלמיד/ה</Text>
+    </View>
 
+    <FlatList
+      data={students}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={({ item , index}) => (
+        <View style={styles.nameContainer}>
+          <Text style={styles.name}>{item.student_name}</Text>
+          <View style={styles.radioButtonContainer}>
+           
+            <TextInput  style={[styles.inputFreeText, { textAlign: 'right' }]} onChangeText={(text) => handleFreeTextChange(text, index)} value={freeText[index]}></TextInput>
 
-    <View style={styles.container}>
-    {names.map(name => (
-      <View key={name} style={styles.nameContainer}>
-        <Text style={styles.name}>{name}</Text>
-        <View style={styles.optionsContainer}>
-          <View style={styles.option}>
-            <RadioButton
-              value={'Option 1'}
-              status={selectedOptions[name] === 'Option 1' ? 'checked' : 'unchecked'}
-              onPress={() => handleOptionSelect(name, 'Option 1')}
+<RadioButton.Item
+              value="bed"
+              status={selectedValues[item.id] === "bed" ? "checked" : "unchecked"}
+              onPress={() => {
+                setSelectedValues({
+                  ...selectedValues,
+                  [item.id]: "bed",
+                });
+              }}
             />
-            {/* <Text>Option 1</Text> */}
-          </View>
-          <View style={styles.option}>
-            <RadioButton
-              value={'Option 2'}
-              status={selectedOptions[name] === 'Option 2' ? 'checked' : 'unchecked'}
-              onPress={() => handleOptionSelect(name, 'Option 2')}
+            <RadioButton.Item
+              value="good"
+              status={selectedValues[item.id] === "good" ? "checked" : "unchecked"}
+              onPress={() => {
+                setSelectedValues({
+                  ...selectedValues,
+                  [item.id]: "good",
+                });
+              }}
             />
-            {/* <Text>Option 2</Text> */}
+
+
+      
           </View>
-          <View style={styles.option}>
-            <RadioButton
-              value={'Option 3'}
-              status={selectedOptions[name] === 'Option 3' ? 'checked' : 'unchecked'}
-              onPress={() => handleOptionSelect(name, 'Option 3')}
-            />
-            {/* <Text>Option 3</Text> */}
-          </View>
-          <TextInput style={[{width: '-90%'}]}></TextInput>
         </View>
+      )}
+    />
+
+
+    <TouchableOpacity style={[styles.butt]} onPress={createReport} >
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
       </View>
-    ))}
-  </View>
-
-
-
-
+    </TouchableOpacity>
   </View>
 )
 }
@@ -106,47 +262,72 @@ export default Diet
 
 const styles = StyleSheet.create({
   report: {
-      
     flexDirection: 'row',
-    alignItems:'center',
-    textAlign:'right',
+    alignItems: 'center',
+    textAlign: 'right',
     justifyContent: 'flex-end',
   },
-  input: {
-    backgroundColor: 'white',
-    borderColor: '#e8e8e8',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    textAlign: 'rigth' ,
-    margin:'auto', 
-    padding:16,
-    marginTop:16,
-    width:300,
-    height: 50
- },
- container: {
-  padding: 16,
-},
-nameContainer: {
-  flexDirection: 'row-reverse',
-  // justifyContent: 'flex-end',
-  marginBottom: 16,
-  justifyContent:'space-around'
 
-},
-name: {
-  fontWeight: 'bold',
-  marginRight: 8,
-  color: 'red'
-},
-optionsContainer: {
-  flexDirection: 'row',
-  // alignItems: 'center'
-},
-option: {
-  flexDirection: 'row',
-  // alignItems: 'center',
-  marginRight: 8
-}
+  container: {
+    padding: 16,
+  },
+  nameContainer: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'flex-end',
+    marginBottom: 16,
+    justifyContent: 'space-around'
+
+  },
+  name: {
+    fontWeight: 'bold',
+    marginRight: 8
+  },
+  optionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8
+  },
+  radioButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  radioButtonItem: {
+    height: 24,
+    width: 24,
+
+  },
+  input: {
+    height: 40,
+    borderColor: 'grey',
+    borderWidth: 1,
+    padding: 10,
+    width: 300,
+    backgroundColor: 'white'
+  },
+  butt: {
+    backgroundColor: '#90EE90',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 20,
+    width: 100
+  },
+  back: {
+      padding:'30%'
+  },
+  inputFreeText:{
+    height: 40,
+    borderColor: 'grey',
+    borderWidth: 1,
+    padding: 10,
+    width: 120,
+    backgroundColor: 'white'
+  }
+ 
 });
 

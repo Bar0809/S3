@@ -7,11 +7,10 @@ import { FontAwesome } from '@expo/vector-icons';
 import { auth, db } from './firebase';
 import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
-const ChooseClass = (props) => {
-  console.log(props.route.params.param1)
+const StudentData = (props) => {
   const navigation = useNavigation();
   const [data, setData] = useState([]);
-  const [ids, setIds] = useState([]);
+  const [courses, setCourses] = useState([]);
 
   const getClasses = async () => {
     const q = query(collection(db, 'Classes'), where('t_id', '==', auth.currentUser.uid));
@@ -33,8 +32,6 @@ const ChooseClass = (props) => {
     setIds(classIds);
   };
 
-
-  console.log(ids);
   
 
   useEffect(() => {
@@ -42,15 +39,6 @@ const ChooseClass = (props) => {
   }, []);
   
 
-  const renderItem = ({ item, index }) => (
-    <View style={{ flexDirection: 'row' }}>
-      <TouchableOpacity onPress={() => navigation.navigate('ChooseCourse', { reported: props.route.params.param1, className: item, classId: ids[index] })}>
-        <Text style={{ padding: 10, fontSize: 22, textAlign: 'center', textDecorationLine: 'underline', flexDirection: 'column', justifyContent: 'center' }}>
-          {item}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
 
 
   return (
@@ -87,7 +75,7 @@ const ChooseClass = (props) => {
    )
  }
               
- export default ChooseClass 
+ export default StudentData 
 
 const styles=StyleSheet.create({
 allPage: {

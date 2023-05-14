@@ -1,40 +1,37 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity,Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity,Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from './firebase'
-import {signOut} from 'firebase/auth'
+import { signOut } from 'firebase/auth'
 
 
-/*import React from 'react';
-import { View, Text, TextInput, StyleSheet,, TouchableOpacity} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { auth } from './firebase'
-import {signOut} from 'firebase/auth'
-
-
-const Toolbar = (props) => {
-const navigation = useNavigation();
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigation.navigate('FullLogin')
-    } catch (error) {
-      Alert.alert("אופס",error.message);
-    }
-  };
-*/
 const Toolbar = (props) => {
   const navigation = useNavigation();
   const [selectedCell, setSelectedCell] = useState(1);
 
   const handleLogout = async () => {
+
     try {
       await signOut(auth);
       navigation.navigate('FullLogin')
     } catch (error) {
+      console.log(error.message);
       Alert.alert("אופס",error.message);
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        // User is signed in.
+        console.log('User is signed in.');
+      } else {
+        // No user is signed in.
+        console.log('No user is signed in.');
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const handleCellPress = (cellIndex) => {
     setSelectedCell(cellIndex);
@@ -48,7 +45,7 @@ const Toolbar = (props) => {
 
     }
     if (cellIndex===2){
-      navigation.navigate('GraphsNData');
+      navigation.navigate('DataHistory');
       setSelectedCell(2);
  
     }

@@ -38,10 +38,9 @@ const validateRepeatPassword = (repeatPassword) => {
 };
 
 const validateName = (name) => {
-  const nameRegex = /^[a-zA-Z]{2,}$/;
+  const nameRegex = /^[\u0590-\u05FF\u0621-\u064Aa-zA-Z]{2,}$/;
   return name.length > 0 && nameRegex.test(name);
-};
-
+  };
 const handleSignUp = async () => {
   const emailIsValid = validateEmail(email);
   const passwordIsValid = validatePassword(password);

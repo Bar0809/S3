@@ -8,40 +8,51 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 
 const ChooseCourse = ({ route }) => {
-    const { className } = route.params;
-    const {reported} = route.params;
+  const { reported, className, classId } = route.params;
+  console.log(reported);
+  console.log(className);
+  console.log(classId);
+
+
     const [selectedCourse, setSelectedCourse] = useState(null);
     const [courses, setCourses] = useState([]);
     const navigation = useNavigation();
 
     function handleButtonClick(item) {
-      console.log("hey")
+      console.log("item is: ----" );
+      console.log(item);
       if (reported === 'Scores') {
-        navigation.navigate('Scores', { className: className,reported: reported, courseName: item.course_name });
+        navigation.navigate('Scores', { className: className,reported: reported, courseName: item.course_name, classId:classId, course_id: item.id });
       } 
       else if (reported === 'Presence') {
-        navigation.navigate('Presence', { className: className,reported: reported, courseName: item.course_name });
+        navigation.navigate('Presence', { className: className,reported: reported, courseName: item.course_name, classId:classId, course_id: item.id });
       }
       else if (reported === 'FriendStatus') {
-        navigation.navigate('FriendStatus', { className: className,reported: reported,courseName: item.course_name });
+        navigation.navigate('FriendStatus', { className: className,reported: reported,courseName: item.course_name, classId:classId, course_id: item.id });
       }
       else if (reported === 'Mood') {
-        navigation.navigate('Mood', { className: className,reported: reported, courseName: item.course_name});
+        navigation.navigate('Mood', { className: className,reported: reported, courseName: item.course_name, classId:classId, course_id: item.id});
       }
       else if (reported === 'Appearances') {
-        navigation.navigate('Appearances', { className: className,reported: reported, courseName: item.course_name });
+        navigation.navigate('Appearances', { className: className,reported: reported, courseName: item.course_name, classId:classId, course_id: item.id });
       }
       else if (reported === 'Diet') {
-        navigation.navigate('Diet', { className: className,reported: reported, courseName: iitem.course_nameem });
+        navigation.navigate('Diet', { className: className,reported: reported, courseName: item.course_name, classId:classId, course_id: item.id });
+      }
+      else if (reported=== 'myChoice1'){
+        navigation.navigate('MyChoice1', { className: className,reported: reported, courseName: item.course_name, classId:classId, course_id: item.id });
+      }
+      else if (reported=== 'myChoice2'){
+        navigation.navigate('MyChoice2', { className: className,reported: reported, courseName: item.course_name, classId:classId, course_id: item.id });
       }
       else {
-        navigation.navigate('Events', { className: className,reported: reported, courseName: item.course_name });
+        navigation.navigate('Events', { className: className,reported: reported, courseName: item.course_name, classId:classId, course_id: item.id });
       }
     }
 
     useEffect(() => {
         const getCourses = async () => {
-            const q = query(collection(db, 'Courses'), where('class_id', '==', className));
+            const q = query(collection(db, 'Courses'), where('class_id', '==', classId));
             const querySnapshot = await getDocs(q);
             const courses = querySnapshot.docs.map(doc => ({id: doc.id, type: 'courses', ...doc.data()}));
             setCourses(courses);
@@ -89,10 +100,11 @@ const styles = StyleSheet.create({
         height: 70,
         borderRadius: 10,
         marginTop: 10,
-        padding: 10
+        padding: 10,
     },
     courseName: {
-        fontSize: 18,
+        fontSize: 18,        
+        textAlign:'center',
         fontWeight: 'bold'
     },
     removeButton: {
