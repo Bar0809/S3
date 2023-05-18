@@ -1,9 +1,17 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, ScrollView } from 'react-native'
-import React, { useState, useEffect, useCallback } from 'react';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import Toolbar from './Toolbar';
-import { auth, db, storage } from './firebase';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Image,
+  ScrollView,
+} from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import Toolbar from "./Toolbar";
+import { auth, db, storage } from "./firebase";
 import * as ImagePicker from "expo-image-picker";
 import {
   getStorage,
@@ -73,13 +81,13 @@ const Gallery = () => {
     try {
       const response = await fetch(image);
       const blob = await response.blob();
-  
+
       const storageRef = ref(storage, name);
       await uploadBytes(storageRef, blob).then((snapshot) => {
         Alert.alert("התמונה עלתה בהצלחה");
       });
       const url = await getDownloadURL(storageRef);
-      setGallery(gallery => [...gallery, url]); // Add the URL of the new photo to the gallery
+      setGallery((gallery) => [...gallery, url]); // Add the URL of the new photo to the gallery
       setIsPhotoUploaded(true); // Set isPhotoUploaded to true
     } catch (e) {
       Alert.alert("Oops", e.message);
@@ -88,100 +96,105 @@ const Gallery = () => {
 
   return (
     <ScrollView showVerticalScrollIndicator={false}>
-    <View style={styles.allPage}>
-      <Toolbar />
-      <View style={styles.title}>
-        <Text style={styles.pageTitle}>גלריה</Text>
+      <View style={styles.allPage}>
+        <Toolbar />
+        <View style={styles.title}>
+          <Text style={styles.pageTitle}>גלריה</Text>
+        </View>
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={[styles.button, styles.uploadButton]}
+            onPress={() => uploadPhoto()}
+          >
+            <Text>העלה לגלריה</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={() => pickImage()}>
+            <Text>בחר תמונה</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.gallery}>
+          {gallery.map((image, index) => (
+            <Image key={index} source={{ uri: image }} style={styles.image} />
+          ))}
+        </View>
+        <TouchableOpacity
+          style={[styles.back, { marginTop: "auto" }]}
+          onPress={() => navigation.navigate("HomePage")}
+        >
+          <MaterialIcons name="navigate-next" size={24} color="black" />
+          <Text>הקודם</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.buttonsContainer}>
-      <TouchableOpacity style={[styles.button, styles.uploadButton]} onPress={() => uploadPhoto()}>
-      <Text>העלה לגלריה</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={styles.button} onPress={() => pickImage()}>
-      <Text>בחר תמונה</Text>
-    </TouchableOpacity>
-    
-    </View>
-      <View style={styles.gallery}>
-        {gallery.map((image, index) => (
-          <Image key={index} source={{uri: image}} style={styles.image} />
-        ))}
-      </View>
-      <TouchableOpacity style={[styles.back, { marginTop: 'auto' }]} onPress={() => navigation.navigate('HomePage')}>
-        <MaterialIcons name="navigate-next" size={24} color="black" />
-        <Text>הקודם</Text>
-      </TouchableOpacity>
-    </View>
     </ScrollView>
-  )
-}
+  );
+};
 
-export default Gallery
+export default Gallery;
 
 const styles = StyleSheet.create({
   allPage: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   title: {
-    alignItems: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    flexDirection: "row",
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "80%",
     paddingHorizontal: 20,
     marginBottom: 10,
   },
   pageTitle: {
-    color: 'black',
+    color: "black",
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   back: {
-    padding: '5%',
-    alignItems: 'center',
+    padding: "5%",
+    alignItems: "center",
     zIndex: 1,
     opacity: 0.7,
   },
   butt: {
-    backgroundColor: '#90EE90',
+    backgroundColor: "#90EE90",
     borderRadius: 50,
-    textAlign: 'center',
-    alignItems: 'center',
+    textAlign: "center",
+    alignItems: "center",
     padding: 20,
-    width: '50%',
+    width: "50%",
     top: 20,
     marginBottom: 10,
-    marginVertical: 10
+    marginVertical: 10,
   },
   buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 10,
   },
   button: {
-    backgroundColor: '#90EE90',
+    backgroundColor: "#90EE90",
     borderRadius: 50,
-    textAlign: 'center',
-    alignItems: 'center',
+    textAlign: "center",
+    alignItems: "center",
     padding: 20,
-    width: '40%',
+    width: "40%",
     marginRight: 10,
     marginLeft: 10,
   },
   uploadButton: {
-    backgroundColor: '#00BFFF',
+    backgroundColor: "#00BFFF",
     marginRight: 0,
     marginLeft: 0,
   },
   gallery: {
     flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     padding: 5,
   },
   image: {

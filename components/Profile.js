@@ -1,54 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import Toolbar from './Toolbar';
-import { View, StyleSheet, Text, TouchableOpacity, Animated, LayoutAnimation, TextInput } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Entypo, MaterialIcons } from '@expo/vector-icons';
-import { RadioButton } from 'react-native-paper';
-import { auth, db } from './firebase';
-import { collection, query, where, getDoc, getDocs, setDoc, doc, updateDoc } from 'firebase/firestore';
-
+import React, { useState, useEffect } from "react";
+import Toolbar from "./Toolbar";
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Animated,
+  LayoutAnimation,
+  TextInput,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Entypo, MaterialIcons } from "@expo/vector-icons";
+import { RadioButton } from "react-native-paper";
+import { auth, db } from "./firebase";
+import {
+  collection,
+  query,
+  where,
+  getDoc,
+  getDocs,
+  setDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 
 const Profile = () => {
   const [userData, setUserData] = useState({});
-  const [checked, setChecked] = useState('medium');
+  const [checked, setChecked] = useState("medium");
   const navigation = useNavigation();
-  const [myChoice1, setMyChoice1] = useState('');
-  const [myChoice2, setMyChoice2] = useState('');
+  const [myChoice1, setMyChoice1] = useState("");
+  const [myChoice2, setMyChoice2] = useState("");
   const [info, setInfo] = useState(false);
   const [icons1, setIcons1] = useState(true);
   const [icons2, setIcons2] = useState(true);
 
-
   useEffect(() => {
     const teacherRef = doc(collection(db, "Teachers"), auth.currentUser.uid);
-    updateDoc(teacherRef, { sensitivity: checked })
-      .then(() => {
-        console.log("Sensitivity updated successfully");
-      })
-      .catch((error) => {
-        console.log("Error updating sensitivity: ", error);
-      });
+    updateDoc(teacherRef, { sensitivity: checked }).catch((error) => {
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+    });
   }, [checked]);
 
   useEffect(() => {
     const teacherRef = doc(collection(db, "Teachers"), auth.currentUser.uid);
-    getDoc(teacherRef).then((doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        setUserData(data);
-      } else {
-        console.log("No such document!");
-      }
-    }).catch((error) => {
-      console.log("Error getting document:", error);
-    });
-
+    getDoc(teacherRef)
+      .then((doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          setUserData(data);
+        } else {
+          // console.log("No such document!");
+        }
+      })
+      .catch((error) => {
+        Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+      });
   }, []);
 
   useEffect(() => {
     const getMyReportsType = async () => {
-      console.log("im be here");
-      const q = query(collection(db, 'users'), where('t_id', '==', auth.currentUser.uid));
+      const q = query(
+        collection(db, "users"),
+        where("t_id", "==", auth.currentUser.uid)
+      );
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.size > 0) {
@@ -57,96 +71,163 @@ const Profile = () => {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log(doc.data())
+
         setMyChoice1(data.myChoice1);
         setMyChoice2(data.myChoice2);
       });
     };
 
     getMyReportsType(); // Call the function here
-
   }, []);
-
-  console.log("info is: " + info);
 
   const saveNames = async () => {
     try {
-      const inputsRef = doc(collection(db, 'users'));
+      const inputsRef = doc(collection(db, "users"));
       await setDoc(inputsRef, {
         myChoice1: myChoice1,
         myChoice2: myChoice2,
         t_id: auth.currentUser.uid,
         icons1: icons1,
-        icons2: icons2
+        icons2: icons2,
       });
       setInfo(true);
-      alert('Names saved successfully!');
+      alert("Names saved successfully!");
     } catch (error) {
       alert(error.message);
     }
   };
 
-
   return (
-    <View >
+    <View>
       <Toolbar />
       <View style={styles.title}>
-        <Text style={styles.pageTitle} >האיזור אישי:  </Text>
+        <Text style={styles.pageTitle}>האיזור אישי: </Text>
       </View>
 
       <View style={[{ padding: 20 }]}>
-        <Text style={[{ textAlign: 'right', fontSize: 24, fontWeight: 'bold', textDecorationLine: 'underline' }]}>פרטים אישיים- </Text>
-
+        <Text
+          style={[
+            {
+              textAlign: "right",
+              fontSize: 24,
+              fontWeight: "bold",
+              textDecorationLine: "underline",
+            },
+          ]}
+        >
+          פרטים אישיים-{" "}
+        </Text>
 
         <View style={styles.row}>
           <Entypo name="edit" size={24} color="black" />
-          <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 20 }]}>שם פרטי: </Text>
-          <Text style={[{ textAlign: 'right', fontSize: 20 }]}>{userData.first_name} </Text>
+          <Text
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
+          >
+            שם פרטי:{" "}
+          </Text>
+          <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+            {userData.first_name}{" "}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Entypo name="edit" size={24} color="black" />
-          <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 20 }]}>שם משפחה:</Text>
-          <Text style={[{ textAlign: 'right', fontSize: 20 }]}>{userData.last_name} </Text>
+          <Text
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
+          >
+            שם משפחה:
+          </Text>
+          <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+            {userData.last_name}{" "}
+          </Text>
         </View>
 
         <View style={styles.row}>
-          <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 20 }]}>כתובת דוא"ל: </Text>
-          <Text style={[{ textAlign: 'right', fontSize: 20 }]}>{userData.email} </Text>
-
+          <Text
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
+          >
+            כתובת דוא"ל:{" "}
+          </Text>
+          <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+            {userData.email}{" "}
+          </Text>
         </View>
 
         <View style={styles.row}>
           <Entypo name="edit" size={24} color="black" />
-          <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 20 }]}>שם ביה"ס:</Text>
-          <Text style={[{ textAlign: 'right', fontSize: 20 }]}>{userData.school_name} </Text>
+          <Text
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
+          >
+            שם ביה"ס:
+          </Text>
+          <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+            {userData.school_name}{" "}
+          </Text>
         </View>
       </View>
 
       <View style={[{ padding: 20 }]}>
-        <Text style={[{ textAlign: 'right', fontSize: 24, fontWeight: 'bold', textDecorationLine: 'underline' }]}>התאמה אישית- </Text>
-        <Text style={[{ textAlign: 'right', fontSize: 18, color: 'red' }]}>בחר/י את רגישות ההתראות להתנהגויות בכיתה</Text>
+        <Text
+          style={[
+            {
+              textAlign: "right",
+              fontSize: 24,
+              fontWeight: "bold",
+              textDecorationLine: "underline",
+            },
+          ]}
+        >
+          התאמה אישית-{" "}
+        </Text>
+        <Text style={[{ textAlign: "right", fontSize: 18, color: "red" }]}>
+          בחר/י את רגישות ההתראות להתנהגויות בכיתה
+        </Text>
 
-        <RadioButton.Group onValueChange={value => setChecked(value)} value={checked}>
+        <RadioButton.Group
+          onValueChange={(value) => setChecked(value)}
+          value={checked}
+        >
           <View style={styles.radioButtonContainer}>
-            <RadioButton.Item label="רגישות גבוהה" value="high" style={styles.radioButtonItem} />
+            <RadioButton.Item
+              label="רגישות גבוהה"
+              value="high"
+              style={styles.radioButtonItem}
+            />
           </View>
           <View style={styles.radioButtonContainer}>
-            <RadioButton.Item label="רגישות בינונית" value="medium" style={styles.radioButtonItem} />
+            <RadioButton.Item
+              label="רגישות בינונית"
+              value="medium"
+              style={styles.radioButtonItem}
+            />
           </View>
           <View style={styles.radioButtonContainer}>
-            <RadioButton.Item label="רגישות נמוכה" value="low" style={styles.radioButtonItem} />
+            <RadioButton.Item
+              label="רגישות נמוכה"
+              value="low"
+              style={styles.radioButtonItem}
+            />
           </View>
         </RadioButton.Group>
       </View>
 
       {info === false ? (
-
         <View style={[{ padding: 20 }]}>
-          <Text style={[{ textAlign: 'right', fontSize: 24, fontWeight: 'bold', textDecorationLine: 'underline' }]}>הגדר/י 2 נושאים לדיווח לפי רצונך: </Text>
+          <Text
+            style={[
+              {
+                textAlign: "right",
+                fontSize: 24,
+                fontWeight: "bold",
+                textDecorationLine: "underline",
+              },
+            ]}
+          >
+            הגדר/י 2 נושאים לדיווח לפי רצונך:{" "}
+          </Text>
           <TextInput
             style={styles.input}
-            onChangeText={text => setMyChoice1(text)}
+            onChangeText={(text) => setMyChoice1(text)}
             value={myChoice1}
             placeholder="נושא 1"
           />
@@ -155,56 +236,56 @@ const Profile = () => {
           <View>
             <TouchableOpacity
               onPress={() => setIcons1(true)}
-              style={{ flexDirection: 'row', alignItems: 'center' }}>
-
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
               <RadioButton
                 value={icons1}
-                status={icons1 ? 'checked' : 'unchecked'}
-                onPress={() => setIcons1(true)} />
+                status={icons1 ? "checked" : "unchecked"}
+                onPress={() => setIcons1(true)}
+              />
 
               <Text>אייקונים והערות</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setIcons1(false)}
-              style={{ flexDirection: 'row', alignItems: 'center' }}
+              style={{ flexDirection: "row", alignItems: "center" }}
             >
               <RadioButton
                 value={!icons1}
-                status={!icons1 ? 'checked' : 'unchecked'}
+                status={!icons1 ? "checked" : "unchecked"}
                 onPress={() => setIcons1(false)}
               />
               <Text>הערות בלבד</Text>
             </TouchableOpacity>
           </View>
 
-
-
           <TextInput
             style={styles.input}
-            onChangeText={text => setMyChoice2(text)}
+            onChangeText={(text) => setMyChoice2(text)}
             value={myChoice2}
             placeholder="נושא 2"
           />
 
-<View>
+          <View>
             <TouchableOpacity
               onPress={() => setIcons2(true)}
-              style={{ flexDirection: 'row', alignItems: 'center' }}>
-
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
               <RadioButton
                 value={icons2}
-                status={icons2 ? 'checked' : 'unchecked'}
-                onPress={() => setIcons2(true)} />
+                status={icons2 ? "checked" : "unchecked"}
+                onPress={() => setIcons2(true)}
+              />
 
               <Text>אייקונים והערות</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setIcons2(false)}
-              style={{ flexDirection: 'row', alignItems: 'center' }}
+              style={{ flexDirection: "row", alignItems: "center" }}
             >
               <RadioButton
                 value={!icons2}
-                status={!icons2 ? 'checked' : 'unchecked'}
+                status={!icons2 ? "checked" : "unchecked"}
                 onPress={() => setIcons2(false)}
               />
               <Text>הערות בלבד</Text>
@@ -217,73 +298,91 @@ const Profile = () => {
         </View>
       ) : (
         <View>
-          <Text style={[{ textAlign: 'right', fontSize: 24, fontWeight: 'bold', textDecorationLine: 'underline' }]}>נושאי הדיווח האישיים: </Text>
+          <Text
+            style={[
+              {
+                textAlign: "right",
+                fontSize: 24,
+                fontWeight: "bold",
+                textDecorationLine: "underline",
+              },
+            ]}
+          >
+            נושאי הדיווח האישיים:{" "}
+          </Text>
 
           <View style={styles.row}>
-            <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 20 }]}>  [1]</Text>
-            <Text style={[{ textAlign: 'right', fontSize: 20 }]}>{myChoice1} </Text>
+            <Text
+              style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
+            >
+              {" "}
+              [1]
+            </Text>
+            <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+              {myChoice1}{" "}
+            </Text>
           </View>
 
           <View style={styles.row}>
-            <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 20, }]}>   [2]</Text>
-            <Text style={[{ textAlign: 'right', fontSize: 20 }]}>{myChoice2} </Text>
+            <Text
+              style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
+            >
+              {" "}
+              [2]
+            </Text>
+            <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+              {myChoice2}{" "}
+            </Text>
           </View>
         </View>
       )}
 
-
-
-      <View style={[{ flex: 1, alignItems: 'center' }]}>
-        <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('HomePage')}>
+      <View style={[{ flex: 1, alignItems: "center" }]}>
+        <TouchableOpacity
+          style={styles.back}
+          onPress={() => navigation.navigate("HomePage")}
+        >
           <MaterialIcons name="navigate-next" size={24} color="black" />
-          <Text style={[{ textAlign: 'left' }]}>הקודם</Text>
+          <Text style={[{ textAlign: "left" }]}>הקודם</Text>
         </TouchableOpacity>
       </View>
-
     </View>
-  )
-}
+  );
+};
 
-export default Profile
+export default Profile;
 
 const styles = StyleSheet.create({
   title: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
   },
   pageTitle: {
-    color: 'black',
+    color: "black",
     fontSize: 40,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     padding: 10,
-
   },
   row: {
-    textAlign: 'right',
-    flexDirection: 'row-reverse',
-    alignItems: 'flex-end'
+    textAlign: "right",
+    flexDirection: "row-reverse",
+    alignItems: "flex-end",
   },
   radioButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
   radioButtonItem: {
-    textAlign: 'right',
+    textAlign: "right",
   },
   input: {
     height: 80,
-    borderColor: 'grey',
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
     width: 100,
-    backgroundColor: 'white',
-
-  }
-
-
-
-
+    backgroundColor: "white",
+  },
 });

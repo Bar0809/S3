@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Toolbar from './Toolbar';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import { RadioButton } from 'react-native-paper';
 import { Entypo } from '@expo/vector-icons';
 
@@ -25,7 +25,7 @@ const SpicelEvent = ({ route }) => {
     const [negativeType, setNegativeType] = useState('');
     const [dateString, setDateString] = useState('');
     const [validDate, setValidDate] = useState(false);
-    const [other, setOther]= useState ('');
+    const [other, setOther] = useState('');
 
 
 
@@ -39,8 +39,8 @@ const SpicelEvent = ({ route }) => {
         setNegativeType(value);
     };
 
-    const handleOtherChange = (value) =>{
-        setOther (value);
+    const handleOtherChange = (value) => {
+        setOther(value);
     }
 
     const handleCommentChange = (value) => {
@@ -50,7 +50,7 @@ const SpicelEvent = ({ route }) => {
     const handleChangeText = (text) => {
         setDateString(text);
         setValidDate(parseDateString(text, 'dd/mm/yyyy'));
-      };
+    };
 
     const handleCreateReport = async () => {
         if (!eventType) {
@@ -58,14 +58,14 @@ const SpicelEvent = ({ route }) => {
             return;
         }
 
-        if(!validDate){
+        if (!validDate) {
             Alert.alert('הזן תאריך תקין');
             return;
         }
 
         let eventTypeText = '';
         if (negativeType === 'other' || positiveType === 'other') {
-            eventTypeText=other;
+            eventTypeText = other;
             if (!eventTypeText) {
                 Alert.alert('Please enter a value for "Other"');
                 return;
@@ -73,15 +73,17 @@ const SpicelEvent = ({ route }) => {
         }
 
 
-        if(negativeType!=='other' && eventType==='negative'){
-            eventTypeText=negativeType;
+        if (negativeType !== 'other' && eventType === 'negative') {
+            eventTypeText = negativeType;
         }
 
-        if(positiveType!=='other' && eventType==='positive'){
-            eventTypeText=positiveType;
+        if (positiveType !== 'other' && eventType === 'positive') {
+            eventTypeText = positiveType;
         }
-        
-        
+
+        const startDateArray = dateString.split('/');
+        const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+        const startDateTime = new Date(startDateISO);
 
         const report = {
             course_id,
@@ -90,18 +92,21 @@ const SpicelEvent = ({ route }) => {
             eventType: eventTypeText,
             type: eventType,
             notes: comment || '',
-            date: dateString,
-
+            date: startDateTime,
+            t_id: auth.currentUser.uid,
+            class_name: className,
+            courseName: courseName,
+            student_name: studentName
         };
 
         try {
             const docRef = await addDoc(collection(db, 'Events'), report);
-            console.log('Report created with ID: ', docRef.id);
+            
             Alert.alert('', 'דו"ח אירוע המיוחד הוגש בהצלחה!')
 
             navigation.navigate("HomePage");
         } catch (error) {
-            console.error('Error adding document: ', error);
+            Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
             Alert.alert('Error creating report, please try again later');
         }
     };
@@ -109,41 +114,41 @@ const SpicelEvent = ({ route }) => {
     function parseDateString(inputString) {
         const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
         const match = inputString.match(dateRegex);
-    
+
         if (!match) {
-          return null;
+            return null;
         }
-    
+
         const day = parseInt(match[1], 10);
         const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
         const year = parseInt(match[3], 10);
-    
+
         // Check if the date is valid
         const date = new Date(year, month, day);
         if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
-          return null;
+            return null;
         }
-    
+
         // Check if the month is valid
         if (month > 11) {
-          return null;
+            return null;
         }
-    
+
         // Check if the day is valid for the given month and year
         const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
         if (day > lastDayOfMonth) {
-          return null;
+            return null;
         }
-    
+
         // Check if the date is within the desired range
         const currentDate = new Date();
         const minDate = new Date('2023-01-01');
         if (date < minDate || date > currentDate) {
-          return null;
+            return null;
         }
-    
+
         return date;
-      }
+    }
 
     return (
         <View>
@@ -159,14 +164,14 @@ const SpicelEvent = ({ route }) => {
             </View>
 
             <View>
-        <Text>תאריך</Text>
-        <TextInput style={[styles.input, { textAlign: 'right' }]} value={dateString} onChangeText={handleChangeText} placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)" />
-        {validDate ? (
-          <Text style={{ color: 'green' }}>Correct date</Text>
-        ) : (
-          <Text style={{ color: 'red' }}>Incorrect date</Text>
-        )}
-      </View>
+                <Text>תאריך</Text>
+                <TextInput style={[styles.input, { textAlign: 'right' }]} value={dateString} onChangeText={handleChangeText} placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)" />
+                {validDate ? (
+                    <Text style={{ color: 'green' }}>Correct date</Text>
+                ) : (
+                    <Text style={{ color: 'red' }}>Incorrect date</Text>
+                )}
+            </View>
 
 
             <Text style={[{ textAlign: 'right', fontSize: 20, fontWeight: 'bold' }]}>סוג האירוע: </Text>
@@ -191,7 +196,7 @@ const SpicelEvent = ({ route }) => {
                         </View>
                         <View style={styles.radioItem}>
                             <RadioButton.Android value="associateHonors" status={positiveType === 'associateHonors' ? 'checked' : 'unchecked'} onPress={() => handlePositiveSelection('associateHonors')} />
-                            <Text style={styles.radioLabel}>הצטיינות חברית  </Text>
+                            <Text style={styles.radioLabel}>הצטיינות חברתית  </Text>
                         </View>
                         <View style={styles.radioItem}>
                             <RadioButton.Android value="other" status={positiveType === 'other' ? 'checked' : 'unchecked'} onPress={() => handlePositiveSelection('other')} />

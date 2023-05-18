@@ -1,12 +1,19 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, Alert } from 'react-native'
-import React, { useState, useEffect, useRef } from 'react'
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import Toolbar from './Toolbar';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import { RadioButton } from 'react-native-paper';
-
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  Alert,
+} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import Toolbar from "./Toolbar";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { auth, db } from "./firebase";
+import { RadioButton } from "react-native-paper";
 
 const Presence = ({ route }) => {
   const navigation = useNavigation();
@@ -15,19 +22,20 @@ const Presence = ({ route }) => {
   const { classId } = route.params;
   const { course_id } = route.params;
 
-
   const [selectedValues, setSelectedValues] = useState({});
   const [students, setStudents] = useState([]);
-  const [dateString, setDateString] = useState('');
+  const [dateString, setDateString] = useState("");
   const [validDate, setValidDate] = useState(false);
-
 
   useEffect(() => {
     const getStudents = async () => {
-      const q = query(collection(db, 'Students'), where('class_id', '==', classId));
+      const q = query(
+        collection(db, "Students"),
+        where("class_id", "==", classId)
+      );
       const querySnapshot = await getDocs(q);
       const data = [];
-      querySnapshot.forEach(doc => {
+      querySnapshot.forEach((doc) => {
         data.push({ ...doc.data(), id: doc.id });
       });
       setStudents(data);
@@ -35,10 +43,9 @@ const Presence = ({ route }) => {
     getStudents();
   }, []);
 
-
   const handleChangeText = (text) => {
     setDateString(text);
-    setValidDate(parseDateString(text, 'dd/mm/yyyy'));
+    setValidDate(parseDateString(text, "dd/mm/yyyy"));
   };
 
   function parseDateString(inputString) {
@@ -55,7 +62,11 @@ const Presence = ({ route }) => {
 
     // Check if the date is valid
     const date = new Date(year, month, day);
-    if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month ||
+      date.getDate() !== day
+    ) {
       return null;
     }
 
@@ -72,7 +83,7 @@ const Presence = ({ route }) => {
 
     // Check if the date is within the desired range
     const currentDate = new Date();
-    const minDate = new Date('2023-01-01');
+    const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
       return null;
     }
@@ -80,98 +91,107 @@ const Presence = ({ route }) => {
     return date;
   }
 
-
   const createReport = async () => {
     const selectedValuesArray = Object.values(selectedValues);
     if (selectedValuesArray.length < students.length) {
-      Alert.alert('שגיאה', 'חסר שדות');
+      Alert.alert("שגיאה", "חסר שדות");
       return;
     }
 
     const allSelected = selectedValuesArray.every((val) => val !== undefined);
 
     if (!validDate) {
-      Alert.alert('שגיאה', 'התאריך שהוזן לא תקין');
+      Alert.alert("שגיאה", "התאריך שהוזן לא תקין");
       return;
     }
 
     if (!validDate || !allSelected) {
-      Alert.alert('שגיאה', 'חסר שדות');
+      Alert.alert("שגיאה", "חסר שדות");
       return;
     }
 
-
-
     // Check if a document with the same date and course_id exists
-    const q = query(collection(db, 'Presence'), where('date', '==', dateString), where('course_id', '==', course_id));
+    const q = query(
+      collection(db, "Presence"),
+      where("date", "==", dateString),
+      where("course_id", "==", course_id)
+    );
     const querySnapshot = await getDocs(q);
-    console.log("!!!!");
+    const startDateArray = dateString.split("/");
+    const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+    const startDateTime = new Date(startDateISO);
     if (querySnapshot.size > 0) {
       Alert.alert(
-        'Add report',
-        'Note that there is an attendance report for this course on the above date. Do you want to continue?',
+        "Add report",
+        "Note that there is an attendance report for this course on the above date. Do you want to continue?",
         [
-          { text: 'No', onPress: () => navigation.navigate('HomePage'), style: 'cancel' },
           {
-            text: 'Yes', onPress: async () => {
+            text: "No",
+            onPress: () => navigation.navigate("HomePage"),
+            style: "cancel",
+          },
+          {
+            text: "Yes",
+            onPress: async () => {
               const presenceData = students.map((student) => {
                 return {
                   course_id: course_id,
                   class_id: classId,
-                  date: dateString,
+                  date: startDateTime,
                   presence: selectedValues[student.id],
                   s_id: student.id,
+                  t_id: auth.currentUser.uid,
+                  class_name: className,
+                  courseName: courseName,
+                  student_name: student.student_name,
                 };
               });
 
               try {
-                await Promise.all(presenceData.map((data) => addDoc(collection(db, 'Presence'), data)));
-                console.log('Documents written successfully');
-                Alert.alert('', 'דו"ח הנוכחות הוגש בהצלחה!')
-                setDetailsAlerted(false);
+                await Promise.all(
+                  presenceData.map((data) =>
+                    addDoc(collection(db, "Presence"), data)
+                  )
+                );
+
+                Alert.alert("", 'דו"ח הנוכחות הוגש בהצלחה!');
                 navigation.navigate("HomePage");
               } catch (e) {
-                console.log(e);
+                Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
               }
-
-
-            }
+            },
           },
         ],
         { cancelable: false }
       );
-    }
-
-    else {
+    } else {
       const presenceData = students.map((student) => {
         return {
           course_id: course_id,
           class_id: classId,
-          date: dateString,
+          date: startDateTime,
           presence: selectedValues[student.id],
           s_id: student.id,
+          t_id: auth.currentUser.uid,
+          class_name: className,
+          courseName: courseName,
+          student_name: student.student_name,
         };
       });
 
       try {
-        await Promise.all(presenceData.map((data) => addDoc(collection(db, 'Presence'), data)));
-        console.log('Documents written successfully');
-        Alert.alert('', 'דו"ח הנוכחות הוגש בהצלחה!')
+        await Promise.all(
+          presenceData.map((data) => addDoc(collection(db, "Presence"), data))
+        );
 
-        setDetailsAlerted(false);
+        Alert.alert("", 'דו"ח הנוכחות הוגש בהצלחה!');
 
         navigation.navigate("HomePage");
-
-
       } catch (e) {
-        console.log(e);
+        Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
       }
-
     }
-
-
   };
-
 
   return (
     <View>
@@ -183,19 +203,40 @@ const Presence = ({ route }) => {
 
       <View>
         <Text>תאריך</Text>
-        <TextInput style={[styles.input, { textAlign: 'right' }]} value={dateString} onChangeText={handleChangeText} placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)" />
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={dateString}
+          onChangeText={handleChangeText}
+          placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
+        />
         {validDate ? (
-          <Text style={{ color: 'green' }}>Correct date</Text>
+          <Text style={{ color: "green" }}>Correct date</Text>
         ) : (
-          <Text style={{ color: 'red' }}>Incorrect date</Text>
+          <Text style={{ color: "red" }}>Incorrect date</Text>
         )}
       </View>
 
-      <View style={[{ flexDirection: 'row', justifyContent: 'space-around' }]}>
-        <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 16 }]}>איחור</Text>
-        <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 16 }]}>חיסור</Text>
-        <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 16 }]}>נוכח/ת</Text>
-        <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 16 }]}>שם התלמיד/ה</Text>
+      <View style={[{ flexDirection: "row", justifyContent: "space-around" }]}>
+        <Text
+          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+        >
+          איחור
+        </Text>
+        <Text
+          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+        >
+          חיסור
+        </Text>
+        <Text
+          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+        >
+          נוכח/ת
+        </Text>
+        <Text
+          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+        >
+          שם התלמיד/ה
+        </Text>
       </View>
 
       <FlatList
@@ -207,7 +248,9 @@ const Presence = ({ route }) => {
             <View style={styles.radioButtonContainer}>
               <RadioButton.Item
                 value="late"
-                status={selectedValues[item.id] === "late" ? "checked" : "unchecked"}
+                status={
+                  selectedValues[item.id] === "late" ? "checked" : "unchecked"
+                }
                 onPress={() => {
                   setSelectedValues({
                     ...selectedValues,
@@ -216,10 +259,11 @@ const Presence = ({ route }) => {
                 }}
               />
 
-
               <RadioButton.Item
                 value="absent"
-                status={selectedValues[item.id] === "absent" ? "checked" : "unchecked"}
+                status={
+                  selectedValues[item.id] === "absent" ? "checked" : "unchecked"
+                }
                 onPress={() => {
                   setSelectedValues({
                     ...selectedValues,
@@ -230,7 +274,11 @@ const Presence = ({ route }) => {
 
               <RadioButton.Item
                 value="present"
-                status={selectedValues[item.id] === "present" ? "checked" : "unchecked"}
+                status={
+                  selectedValues[item.id] === "present"
+                    ? "checked"
+                    : "unchecked"
+                }
                 onPress={() => {
                   setSelectedValues({
                     ...selectedValues,
@@ -238,89 +286,75 @@ const Presence = ({ route }) => {
                   });
                 }}
               />
-
-
             </View>
           </View>
         )}
       />
 
-
-      <TouchableOpacity style={[styles.butt]} onPress={createReport} >
+      <TouchableOpacity style={[styles.butt]} onPress={createReport}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
         </View>
       </TouchableOpacity>
-
     </View>
   );
+};
 
-}
-
-export default Presence
-
+export default Presence;
 
 const styles = StyleSheet.create({
   report: {
-
-    flexDirection: 'row',
-    alignItems: 'center',
-    textAlign: 'right',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    alignItems: "center",
+    textAlign: "right",
+    justifyContent: "flex-end",
   },
 
   container: {
     padding: 16,
   },
   nameContainer: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'flex-end',
+    flexDirection: "row-reverse",
+    justifyContent: "flex-end",
     marginBottom: 16,
-    justifyContent: 'space-around'
-
+    justifyContent: "space-around",
   },
   name: {
-    fontWeight: 'bold',
-    marginRight: 8
+    fontWeight: "bold",
+    marginRight: 8,
   },
   optionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center'
+    flexDirection: "row",
+    alignItems: "center",
   },
   option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 8
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 8,
   },
   radioButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
     marginRight: 16,
   },
   radioButtonItem: {
     height: 24,
     width: 24,
-
   },
   input: {
     height: 40,
-    borderColor: 'grey',
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
     width: 300,
-    backgroundColor: 'white'
+    backgroundColor: "white",
   },
   butt: {
-    backgroundColor: '#90EE90',
+    backgroundColor: "#90EE90",
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
-    width: 100
-  }
-
-
-
-
+    width: 100,
+  },
 });
-

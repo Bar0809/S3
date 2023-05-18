@@ -31,7 +31,6 @@ const [schoolName, setSchoolName] = useState('');
   const readExcelFile = async () => {
     try {
       const file = await XLSX.readFile('<path to your Excel file>');
-      console.log(file.SheetNames); // output the sheet names in the Excel file
     } catch (error) {
       console.log(error);
     }

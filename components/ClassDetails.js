@@ -1,37 +1,61 @@
-import { ScrollView,View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, TextInput } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import Toolbar from './Toolbar';
-import { auth, db } from './firebase';
-import { collection, query, where, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FontAwesome } from '@expo/vector-icons';
-
+import {
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+  TextInput,
+} from "react-native";
+import React, { useState, useEffect } from "react";
+import Toolbar from "./Toolbar";
+import { auth, db } from "./firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc,
+  setDoc,
+} from "firebase/firestore";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 
 const ClassDetails = ({ route }) => {
   const { class_id } = route.params;
   const { class_name } = route.params;
- 
 
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [showContent, setShowContent] = useState(false);
   const [showContent2, setShowContent2] = useState(false);
-  const [inputText, setInputText] = useState('');
-  const [inputText2, setInputText2] = useState('');
-
+  const [inputText, setInputText] = useState("");
+  const [inputText2, setInputText2] = useState("");
 
   useEffect(() => {
     const getCourses = async () => {
-      const q = query(collection(db, 'Courses'), where('class_id', '==', class_id));
+      const q = query(
+        collection(db, "Courses"),
+        where("class_id", "==", class_id)
+      );
       const querySnapshot = await getDocs(q);
-      const names = querySnapshot.docs.map(doc => doc.data().course_name);
+      const names = querySnapshot.docs.map((doc) => doc.data().course_name);
       setCourses(names);
     };
 
     const getStudents = async () => {
-      const q = query(collection(db, 'Students'), where('class_id', '==', class_id));
+      const q = query(
+        collection(db, "Students"),
+        where("class_id", "==", class_id)
+      );
       const querySnapshot = await getDocs(q);
-      const students = querySnapshot.docs.map(doc => ({ id: doc.id, type: 'student', ...doc.data() }));
+      const students = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        type: "student",
+        ...doc.data(),
+      }));
       setStudents(students);
     };
     getCourses();
@@ -40,19 +64,29 @@ const ClassDetails = ({ route }) => {
 
   const handleDeleteStudent = async (student) => {
     Alert.alert(
-      'Delete Student',
-      'Are you sure you want to delete this student?',
+      "Delete Student",
+      "Are you sure you want to delete this student?",
       [
-        { text: 'No', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
         {
-          text: 'Yes', onPress: async () => {
-            const q = query(collection(db, 'Students'), where('student_name', '==', student.student_name), where('class_id', '==', class_id), where('t_id', '==', auth.currentUser.uid));
+          text: "No",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            const q = query(
+              collection(db, "Students"),
+              where("student_name", "==", student.student_name),
+              where("class_id", "==", class_id),
+              where("t_id", "==", auth.currentUser.uid)
+            );
             const querySnapshot = await getDocs(q);
-            const studentDocs = querySnapshot.docs.map(doc => doc.ref);
+            const studentDocs = querySnapshot.docs.map((doc) => doc.ref);
             await Promise.all(studentDocs.map(deleteDoc));
-            const updatedStudents = students.filter(s => s.id !== student.id);
+            const updatedStudents = students.filter((s) => s.id !== student.id);
             setStudents(updatedStudents);
-          }
+          },
         },
       ],
       { cancelable: false }
@@ -62,46 +96,50 @@ const ClassDetails = ({ route }) => {
   const handleRemoveCourse = async (item) => {
     try {
       Alert.alert(
-        'Delete Student',
-        'Are you sure you want to delete this course?',
+        "Delete Student",
+        "Are you sure you want to delete this course?",
         [
-          { text: 'No', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
           {
-            text: 'Yes', onPress: async () => {
-              const q = query(collection(db, 'Courses'), where('course_name', '==', item), where('t_id', '==', auth.currentUser.uid));
+            text: "No",
+            onPress: () => Alert.alert("Cancel Pressed"),
+            style: "cancel",
+          },
+          {
+            text: "Yes",
+            onPress: async () => {
+              const q = query(
+                collection(db, "Courses"),
+                where("course_name", "==", item),
+                where("t_id", "==", auth.currentUser.uid)
+              );
               const querySnapshot = await getDocs(q);
-              const coursetDocs = querySnapshot.docs.map(doc => doc.ref);
+              const coursetDocs = querySnapshot.docs.map((doc) => doc.ref);
               await Promise.all(coursetDocs.map(deleteDoc));
-              const updatedCourses = courses.filter(s => s.class_name !== id);
+              const updatedCourses = courses.filter((s) => s.class_name !== id);
               setCourses(updatedCourses);
-              console.log("--------" + updatedCourses);
-            }
+            },
           },
         ],
         { cancelable: false }
       );
     } catch (error) {
-      console.error('Error removing document: ', error);
+      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
     }
-
   };
 
   const handlePressCourses = () => {
-    console.log("!")
     setShowContent(!showContent);
-    
   };
 
   const handlePressStudents = () => {
     setShowContent2(!showContent2);
-    
   };
 
   const handleAddCourse = async () => {
     try {
       const courseName = inputText.trim();
       if (courseName.length > 0) {
-        const courseRef = doc(collection(db, 'Courses'));
+        const courseRef = doc(collection(db, "Courses"));
         await setDoc(courseRef, {
           class_id: class_id,
           course_name: courseName,
@@ -109,176 +147,234 @@ const ClassDetails = ({ route }) => {
         });
         const newCourses = [...courses, courseName];
         setCourses(newCourses);
-        setInputText('');
+        setInputText("");
         handlePressCourses();
       }
     } catch (error) {
-      console.error('Error adding document: ', error);
+      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
     }
   };
-  
+
   const handleAddStudent = async (textInput) => {
     try {
-      console.log("kdkdkkd")
-      const studentName=inputText2;
+      const studentName = inputText2;
       if (studentName.length > 0) {
-        console.log("!")
-        const studentRef = doc(collection(db, 'Students'));
+        const studentRef = doc(collection(db, "Students"));
         await setDoc(studentRef, {
-          student_name:studentName,
+          student_name: studentName,
           t_id: auth.currentUser.uid,
         });
         const newStudents = [...students, studentName];
         setStudents(newStudents);
-        setInputText2('');
+        setInputText2("");
         handlePressStudents();
       }
     } catch (error) {
-      console.error('Error adding document: ', error);
+      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
     }
   };
-  
-
 
   const renderItem = ({ item }) => {
-    if (item.type === 'student') {
+    if (item.type === "student") {
       return (
         <View style={styles.listItem}>
-          {item.type === 'student' && (
+          {item.type === "student" && (
             <TouchableOpacity onPress={() => handleDeleteStudent(item)}>
-              <Text style={[{ textAlign: 'right', fontWeight: 'bold', textDecorationLine: 'underline' }]}>הסר</Text>
+              <Text
+                style={[
+                  {
+                    textAlign: "right",
+                    fontWeight: "bold",
+                    textDecorationLine: "underline",
+                  },
+                ]}
+              >
+                הסר
+              </Text>
             </TouchableOpacity>
           )}
 
           <Text style={[{ paddingLeft: 70 }]}>{item.student_name}</Text>
         </View>
       );
-    }
-    else {
+    } else {
       return (
         <View style={styles.listItem}>
           <TouchableOpacity onPress={() => handleRemoveCourse(item)}>
-            <Text style={[{ textAlign: 'right', fontWeight: 'bold', textDecorationLine: 'underline' }]}>הסר</Text>
-
+            <Text
+              style={[
+                {
+                  textAlign: "right",
+                  fontWeight: "bold",
+                  textDecorationLine: "underline",
+                },
+              ]}
+            >
+              הסר
+            </Text>
           </TouchableOpacity>
 
           <Text style={[{ paddingLeft: 70 }]}>{item}</Text>
-
         </View>
       );
     }
   };
 
   return (
-
-    <View style={[{ alignItems: 'center' }]}>
+    <View style={[{ alignItems: "center" }]}>
       <Toolbar />
 
       <View style={styles.title}>
         <Text style={styles.pageTitle}> {class_name} </Text>
-        <FontAwesome name="users" size={30} color="black" style={[{ paddingLeft: -50 }]} />
+        <FontAwesome
+          name="users"
+          size={30}
+          color="black"
+          style={[{ paddingLeft: -50 }]}
+        />
       </View>
 
-      <Text style={[{ textAlign: 'right', fontSize: 20, fontWeight: 'bold', textDecorationLine: 'underline' }]}>מקצועות הלימוד:</Text>
+      <Text
+        style={[
+          {
+            textAlign: "right",
+            fontSize: 20,
+            fontWeight: "bold",
+            textDecorationLine: "underline",
+          },
+        ]}
+      >
+        מקצועות הלימוד:
+      </Text>
 
-      <FlatList data={courses} renderItem={renderItem} keyExtractor={item => item.id} />
+      <FlatList
+        data={courses}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+      />
 
       <TouchableOpacity style={styles.button} onPress={handlePressCourses}>
-        <MaterialCommunityIcons style={styles.icon} name="plus" size={24} color="black" />
-        <Text style={styles.buttonText} >הוסף קורס</Text>
+        <MaterialCommunityIcons
+          style={styles.icon}
+          name="plus"
+          size={24}
+          color="black"
+        />
+        <Text style={styles.buttonText}>הוסף קורס</Text>
       </TouchableOpacity>
 
-      {showContent && (<>
-              <TextInput style={[styles.input, { textAlign: 'right' }]} placeholder='  שם המקצוע:'  onChangeText={text => setInputText(text)} value={inputText} />
+      {showContent && (
+        <>
+          <TextInput
+            style={[styles.input, { textAlign: "right" }]}
+            placeholder="  שם המקצוע:"
+            onChangeText={(text) => setInputText(text)}
+            value={inputText}
+          />
 
-              <TouchableOpacity style={[styles.butt]} onPress={handleAddCourse} >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Text style={{ marginLeft: 5 }} >הוסף/י מקצוע</Text>
-                </View>
-              </TouchableOpacity>
-              
-            </>)}
+          <TouchableOpacity style={[styles.butt]} onPress={handleAddCourse}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={{ marginLeft: 5 }}>הוסף/י מקצוע</Text>
+            </View>
+          </TouchableOpacity>
+        </>
+      )}
 
-      <Text style={[{ textAlign: 'right', fontSize: 20, fontWeight: 'bold', textDecorationLine: 'underline' }]}>רשימת תלמידים:</Text>
-      <FlatList data={students} renderItem={renderItem} keyExtractor={item => item.id} />
+      <Text
+        style={[
+          {
+            textAlign: "right",
+            fontSize: 20,
+            fontWeight: "bold",
+            textDecorationLine: "underline",
+          },
+        ]}
+      >
+        רשימת תלמידים:
+      </Text>
+      <FlatList
+        data={students}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+      />
 
       <TouchableOpacity style={styles.button} onPress={handlePressStudents}>
-        <MaterialCommunityIcons style={styles.icon} name="plus" size={24} color="black" />
+        <MaterialCommunityIcons
+          style={styles.icon}
+          name="plus"
+          size={24}
+          color="black"
+        />
         <Text style={styles.buttonText}>הוסף תלמיד/ה</Text>
       </TouchableOpacity>
 
-      {showContent2 && (<>
-              <TextInput style={[styles.input, { textAlign: 'right' }]} placeholder='  שם התלמיד/ה:'  onChangeText={text => setInputText2(text)} value={inputText2} />
+      {showContent2 && (
+        <>
+          <TextInput
+            style={[styles.input, { textAlign: "right" }]}
+            placeholder="  שם התלמיד/ה:"
+            onChangeText={(text) => setInputText2(text)}
+            value={inputText2}
+          />
 
-              <TouchableOpacity style={[styles.butt]} onPress={handleAddStudent}>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Text style={{ marginLeft: 5 }}>הוסף/י תלמיד/ה</Text>
-                </View>
-              </TouchableOpacity>
-              
-            </>)}
-
-
-
-
+          <TouchableOpacity style={[styles.butt]} onPress={handleAddStudent}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={{ marginLeft: 5 }}>הוסף/י תלמיד/ה</Text>
+            </View>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
-   
-  )
-}
+  );
+};
 
-export default ClassDetails
+export default ClassDetails;
 
 const styles = StyleSheet.create({
-
   title: {
-    alignItems: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    flexDirection: "row",
   },
   pageTitle: {
-    color: 'black',
+    color: "black",
     fontSize: 30,
-    fontWeight: 'bold',
-    alignItems: 'center',
-
+    fontWeight: "bold",
+    alignItems: "center",
   },
   button: {
-    backgroundColor: '#ddd',
+    backgroundColor: "#ddd",
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
   },
   buttonText: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   container: {
     flex: 1,
-
   },
   icon: {
-    textAlign: 'center'
+    textAlign: "center",
   },
   listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 20,
-    
   },
   input: {
     height: 40,
-    borderColor: 'grey',
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
     width: 300,
-    backgroundColor: 'white'
+    backgroundColor: "white",
   },
   butt: {
-    backgroundColor: '#90EE90',
+    backgroundColor: "#90EE90",
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
-  }
-
-
-})
+  },
+});

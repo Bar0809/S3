@@ -1,12 +1,20 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, Alert } from 'react-native'
-import React, { useState, useEffect, useRef } from 'react'
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import Toolbar from './Toolbar';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import { RadioButton } from 'react-native-paper';
-import { Entypo } from '@expo/vector-icons';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  Alert,
+} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import Toolbar from "./Toolbar";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { db, auth } from "./firebase";
+import { RadioButton } from "react-native-paper";
+import { Entypo } from "@expo/vector-icons";
 
 const FriendStatus = ({ route }) => {
   const navigation = useNavigation();
@@ -17,16 +25,19 @@ const FriendStatus = ({ route }) => {
 
   const [selectedValues, setSelectedValues] = useState({});
   const [students, setStudents] = useState([]);
-  const [dateString, setDateString] = useState('');
+  const [dateString, setDateString] = useState("");
   const [freeText, setFreeText] = useState([]);
   const [validDate, setValidDate] = useState(false);
 
   useEffect(() => {
     const getStudents = async () => {
-      const q = query(collection(db, 'Students'), where('class_id', '==', classId));
+      const q = query(
+        collection(db, "Students"),
+        where("class_id", "==", classId)
+      );
       const querySnapshot = await getDocs(q);
       const data = [];
-      querySnapshot.forEach(doc => {
+      querySnapshot.forEach((doc) => {
         data.push({ ...doc.data(), id: doc.id });
       });
       setStudents(data);
@@ -37,102 +48,119 @@ const FriendStatus = ({ route }) => {
   const createReport = async () => {
     const selectedValuesArray = Object.values(selectedValues);
     if (selectedValuesArray.length < students.length) {
-      Alert.alert('שגיאה', 'חסר שדות');
+      Alert.alert("שגיאה", "חסר שדות");
       return;
     }
 
     const allSelected = selectedValuesArray.every((val) => val !== undefined);
 
     if (!validDate) {
-      Alert.alert('שגיאה', 'התאריך שהוזן לא תקין');
+      Alert.alert("שגיאה", "התאריך שהוזן לא תקין");
       return;
     }
 
     if (!validDate || !allSelected) {
-      Alert.alert('שגיאה', 'חסר שדות');
+      Alert.alert("שגיאה", "חסר שדות");
       return;
     }
 
     // Set empty strings for undefined freeText values
     for (let i = 0; i < students.length; i++) {
       if (freeText[i] === undefined) {
-        freeText[i] = '';
+        freeText[i] = "";
       }
     }
 
     // Check if a document with the same date and course_id exists
-    const q = query(collection(db, 'FriendStatus'), where('date', '==', dateString), where('course_id', '==', course_id));
+    const q = query(
+      collection(db, "FriendStatus"),
+      where("date", "==", dateString),
+      where("course_id", "==", course_id)
+    );
     const querySnapshot = await getDocs(q);
+    const startDateArray = dateString.split("/");
+    const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+    const startDateTime = new Date(startDateISO);
     if (querySnapshot.size > 0) {
       Alert.alert(
-        'Add report',
-        'Note that there is an attendance report for this course on the above date. Do you want to continue?',
+        "Add report",
+        "Note that there is an attendance report for this course on the above date. Do you want to continue?",
         [
-          { text: 'No', onPress: () => navigation.navigate('HomePage'), style: 'cancel' },
           {
-            text: 'Yes', onPress: async () => {
+            text: "No",
+            onPress: () => navigation.navigate("HomePage"),
+            style: "cancel",
+          },
+          {
+            text: "Yes",
+            onPress: async () => {
               const friendStatusData = students.map((student, i) => {
                 return {
                   course_id: course_id,
                   class_id: classId,
-                  date: dateString,
+                  date: startDateTime,
                   friendStatus: selectedValues[student.id],
                   s_id: student.id,
                   note: freeText[i],
+                  t_id: auth.currentUser.uid,
+                  class_name: className,
+                  courseName: courseName,
+                  student_name: student.student_name,
                 };
               });
 
               try {
-                await Promise.all(friendStatusData.map((data) => addDoc(collection(db, 'FriendStatus'), data)));
-                console.log('Documents written successfully');
-                Alert.alert('', 'דו"ח הסטטוס החברתי הוגש בהצלחה!')
+                await Promise.all(
+                  friendStatusData.map((data) =>
+                    addDoc(collection(db, "FriendStatus"), data)
+                  )
+                );
+
+                Alert.alert("", 'דו"ח הסטטוס החברתי הוגש בהצלחה!');
                 navigation.navigate("HomePage");
               } catch (e) {
-                console.log(e);
+                Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
               }
-
-
-            }
+            },
           },
         ],
         { cancelable: false }
       );
-    }
-
-    else {
+    } else {
       const friendStatusData = students.map((student, i) => {
         return {
           course_id: course_id,
           class_id: classId,
-          date: dateString,
+          date: startDateTime,
           friendStatus: selectedValues[student.id],
           s_id: student.id,
           note: freeText[i],
+          t_id: auth.currentUser.uid,
+          class_name: className,
+          courseName: courseName,
+          student_name: student.student_name,
         };
       });
 
       try {
-        await Promise.all(friendStatusData.map((data) => addDoc(collection(db, 'FriendStatus'), data)));
-        console.log('Documents written successfully');
-        Alert.alert('', 'דו"ח הסטטוס החברתי הוגש בהצלחה!')
+        await Promise.all(
+          friendStatusData.map((data) =>
+            addDoc(collection(db, "FriendStatus"), data)
+          )
+        );
 
+        Alert.alert("", 'דו"ח הסטטוס החברתי הוגש בהצלחה!');
 
         navigation.navigate("HomePage");
-
-
       } catch (e) {
-        console.log(e);
+        Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
       }
-
     }
-
-
   };
-
 
   const handleChangeText = (text) => {
     setDateString(text);
-    setValidDate(parseDateString(text, 'dd/mm/yyyy'));
+    setValidDate(parseDateString(text, "dd/mm/yyyy"));
   };
 
   function parseDateString(inputString) {
@@ -149,7 +177,11 @@ const FriendStatus = ({ route }) => {
 
     // Check if the date is valid
     const date = new Date(year, month, day);
-    if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month ||
+      date.getDate() !== day
+    ) {
       return null;
     }
 
@@ -166,7 +198,7 @@ const FriendStatus = ({ route }) => {
 
     // Check if the date is within the desired range
     const currentDate = new Date();
-    const minDate = new Date('2023-01-01');
+    const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
       return null;
     }
@@ -177,11 +209,12 @@ const FriendStatus = ({ route }) => {
   const handleFreeTextChange = (text, index) => {
     const newFreeText = [...freeText];
     newFreeText[index] = text;
-    setFreeText(newFreeText);  }
+    setFreeText(newFreeText);
+  };
 
   return (
     <View>
-      <Toolbar/>
+      <Toolbar />
       <View style={styles.report}>
         <Text style={{ fontSize: 20, padding: 10 }}> צור/י דיווח חדש</Text>
         <Ionicons name="create-outline" size={24} color="black" />
@@ -189,21 +222,34 @@ const FriendStatus = ({ route }) => {
 
       <View>
         <Text>תאריך</Text>
-        <TextInput style={[styles.input, { textAlign: 'right' }]} value={dateString} onChangeText={handleChangeText} placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)" />
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={dateString}
+          onChangeText={handleChangeText}
+          placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
+        />
         {validDate ? (
-          <Text style={{ color: 'green' }}>Correct date</Text>
+          <Text style={{ color: "green" }}>Correct date</Text>
         ) : (
-          <Text style={{ color: 'red' }}>Incorrect date</Text>
+          <Text style={{ color: "red" }}>Incorrect date</Text>
         )}
       </View>
 
-      <View style={[{ flexDirection: 'row', justifyContent: 'space-around' }]}>
-        <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 16 }]}>הערות -לא חובה</Text>
+      <View style={[{ flexDirection: "row", justifyContent: "space-around" }]}>
+        <Text
+          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+        >
+          הערות -לא חובה
+        </Text>
 
         <Entypo name="emoji-sad" size={24} color="black" />
         <Entypo name="emoji-neutral" size={24} color="black" />
         <Entypo name="emoji-happy" size={24} color="black" />
-        <Text style={[{ textAlign: 'right', fontWeight: 'bold', fontSize: 16 }]}>שם התלמיד/ה</Text>
+        <Text
+          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+        >
+          שם התלמיד/ה
+        </Text>
       </View>
 
       <FlatList
@@ -213,12 +259,17 @@ const FriendStatus = ({ route }) => {
           <View style={styles.nameContainer}>
             <Text style={styles.name}>{item.student_name}</Text>
             <View style={styles.radioButtonContainer}>
-
-              <TextInput style={[styles.inputFreeText, { textAlign: 'right' }]} onChangeText={(text) => handleFreeTextChange(text, index)} value={freeText[index]}></TextInput>
+              <TextInput
+                style={[styles.inputFreeText, { textAlign: "right" }]}
+                onChangeText={(text) => handleFreeTextChange(text, index)}
+                value={freeText[index]}
+              ></TextInput>
 
               <RadioButton.Item
                 value="bed"
-                status={selectedValues[item.id] === "bed" ? "checked" : "unchecked"}
+                status={
+                  selectedValues[item.id] === "bed" ? "checked" : "unchecked"
+                }
                 onPress={() => {
                   setSelectedValues({
                     ...selectedValues,
@@ -229,7 +280,9 @@ const FriendStatus = ({ route }) => {
 
               <RadioButton.Item
                 value="medium"
-                status={selectedValues[item.id] === "medium" ? "checked" : "unchecked"}
+                status={
+                  selectedValues[item.id] === "medium" ? "checked" : "unchecked"
+                }
                 onPress={() => {
                   setSelectedValues({
                     ...selectedValues,
@@ -240,7 +293,9 @@ const FriendStatus = ({ route }) => {
 
               <RadioButton.Item
                 value="good"
-                status={selectedValues[item.id] === "good" ? "checked" : "unchecked"}
+                status={
+                  selectedValues[item.id] === "good" ? "checked" : "unchecked"
+                }
                 onPress={() => {
                   setSelectedValues({
                     ...selectedValues,
@@ -248,97 +303,86 @@ const FriendStatus = ({ route }) => {
                   });
                 }}
               />
-
-
-
             </View>
           </View>
         )}
       />
 
-
-      <TouchableOpacity style={[styles.butt]} onPress={createReport} >
+      <TouchableOpacity style={[styles.butt]} onPress={createReport}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
         </View>
       </TouchableOpacity>
     </View>
-  )
-}
+  );
+};
 
-export default FriendStatus
-
+export default FriendStatus;
 
 const styles = StyleSheet.create({
-  
   report: {
-
-    flexDirection: 'row',
-    alignItems: 'center',
-    textAlign: 'right',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    alignItems: "center",
+    textAlign: "right",
+    justifyContent: "flex-end",
   },
 
   container: {
     padding: 16,
   },
   nameContainer: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'flex-end',
+    flexDirection: "row-reverse",
+    justifyContent: "flex-end",
     marginBottom: 16,
-    justifyContent: 'space-around'
-
+    justifyContent: "space-around",
   },
   name: {
-    fontWeight: 'bold',
-    marginRight: 8
+    fontWeight: "bold",
+    marginRight: 8,
   },
   optionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center'
+    flexDirection: "row",
+    alignItems: "center",
   },
   option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 8
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 8,
   },
   radioButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
     marginRight: 16,
   },
   radioButtonItem: {
     height: 24,
     width: 24,
-
   },
   input: {
     height: 40,
-    borderColor: 'grey',
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
     width: 300,
-    backgroundColor: 'white'
+    backgroundColor: "white",
   },
   butt: {
-    backgroundColor: '#90EE90',
+    backgroundColor: "#90EE90",
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
-    width: 100
+    width: 100,
   },
   back: {
-      padding:'30%'
+    padding: "30%",
   },
-  inputFreeText:{
+  inputFreeText: {
     height: 40,
-    borderColor: 'grey',
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
     width: 100,
-    backgroundColor: 'white'
-  }
-
+    backgroundColor: "white",
+  },
 });
-

@@ -10,7 +10,7 @@ import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore
 const StudentData = (props) => {
   const navigation = useNavigation();
   const [data, setData] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const [ids, setIds] = useState([]);
 
   const getClasses = async () => {
     const q = query(collection(db, 'Classes'), where('t_id', '==', auth.currentUser.uid));
@@ -32,6 +32,8 @@ const StudentData = (props) => {
     setIds(classIds);
   };
 
+
+  console.log(ids);
   
 
   useEffect(() => {
@@ -39,6 +41,15 @@ const StudentData = (props) => {
   }, []);
   
 
+  const renderItem = ({ item, index }) => (
+    <View style={{ flexDirection: 'row' }}>
+      <TouchableOpacity onPress={() => navigation.navigate('ChooseStudentForHistory', { className: item, classId: ids[index] })}>
+        <Text style={{ padding: 10, fontSize: 22, textAlign: 'center', textDecorationLine: 'underline', flexDirection: 'column', justifyContent: 'center' }}>
+          {item}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 
 
   return (
