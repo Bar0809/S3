@@ -107,6 +107,8 @@ const MyChoice1 = ({ route }) => {
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
+
       return null;
     }
 
@@ -147,6 +149,9 @@ const MyChoice1 = ({ route }) => {
         where("course_id", "==", course_id)
       );
       const querySnapshot = await getDocs(q);
+      const startDateArray = dateString.split("/");
+      const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+      const startDateTime = new Date(startDateISO);
       if (querySnapshot.size > 0) {
         Alert.alert(
           "Add report",
@@ -164,10 +169,14 @@ const MyChoice1 = ({ route }) => {
                   return {
                     course_id: course_id,
                     class_id: classId,
-                    date: dateString,
+                    date: startDateTime,
                     myChoice: selectedValues[student.id],
                     s_id: student.id,
                     note: freeText[i],
+                    t_id: auth.currentUser.uid,
+                    class_name: className,
+                    courseName: courseName,
+                    student_name: student.student_name,
                   };
                 });
 
@@ -193,10 +202,14 @@ const MyChoice1 = ({ route }) => {
           return {
             course_id: course_id,
             class_id: classId,
-            date: dateString,
+            date: startDateTime,
             myChoice: selectedValues[student.id],
             s_id: student.id,
             note: freeText[i],
+            t_id: auth.currentUser.uid,
+            class_name: className,
+            courseName: courseName,
+            student_name: student.student_name,
           };
         });
 
@@ -214,7 +227,11 @@ const MyChoice1 = ({ route }) => {
           Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
         }
       }
-    } else {
+    }
+    
+    
+    
+    else {
       if (freeText.length < students.length) {
         Alert.alert(
           "לתשומת ליבך",
@@ -264,6 +281,10 @@ const MyChoice1 = ({ route }) => {
                     date: startDateTime,
                     myChoice: freeText[i],
                     s_id: student.id,
+                    t_id: auth.currentUser.uid,
+                    class_name: className,
+                    courseName: courseName,
+                    student_name: student.student_name,
                   };
                 });
 
@@ -292,6 +313,10 @@ const MyChoice1 = ({ route }) => {
             date: startDateTime,
             myChoice: freeText[i],
             s_id: student.id,
+            t_id: auth.currentUser.uid,
+            class_name: className,
+            courseName: courseName,
+            student_name: student.student_name,
           };
         });
 

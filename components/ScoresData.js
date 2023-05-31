@@ -1,18 +1,10 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  TextInput,
-  ScrollView,
-  SectionList,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, ScrollView, SectionList,} from "react-native";
 import React, { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import Toolbar from "./Toolbar";
 import { collection, query, where, getDocs, getDoc } from "firebase/firestore";
 import { db, auth } from "./firebase";
+
 
 const ScoresData = () => {
   const [startDateString, setStartDateString] = useState("");
@@ -27,6 +19,7 @@ const ScoresData = () => {
   const [resultObject, setResultObject] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
 
+  
   function parseDateString(inputString) {
     const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
 
@@ -37,6 +30,7 @@ const ScoresData = () => {
 
     const day = parseInt(match[1], 10);
     const month = parseInt(match[2], 10) - 1;
+    const year = parseInt(match[3], 10);
 
     const date = new Date(year, month, day);
     if (
@@ -59,6 +53,7 @@ const ScoresData = () => {
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return false;
     }
 
@@ -85,7 +80,7 @@ const ScoresData = () => {
     const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
     const endDateTime = new Date(endDateISO);
     let querySnapshot;
-
+  
     if (startDate && endDate) {
       try {
         const scoresRef = collection(db, "Scores");
@@ -93,46 +88,48 @@ const ScoresData = () => {
           scoresRef,
           where("date", ">=", startDateTime),
           where("date", "<=", endDateTime),
-          where ("t_id" , "===" , auth.currentUser)
+          where("t_id", "==", auth.currentUser.uid),
         );
         querySnapshot = await getDocs(q);
         const scores = [];
-
+  
         querySnapshot.forEach((doc) => {
           scores.push(doc.id);
         });
-
+  
         setScoresIds(scores);
+  
+        const scoresDates = [];
+        await Promise.all(
+          querySnapshot.docs.map(async (doc) => {
+            const docRef = doc.ref;
+            const docSnapshot = await getDoc(docRef);
+            const scoresValue = docSnapshot.data().date.toDate();
+            const day = scoresValue.getDate().toString().padStart(2, "0");
+            const month = (scoresValue.getMonth() + 1).toString().padStart(2, "0");
+            const year = scoresValue.getFullYear();
+            const formattedDate = `${day}/${month}/${year}`;
+            if (!scoresDates.includes(formattedDate)) {
+              scoresDates.push(formattedDate);
+            }
+          })
+        );
+  
+        setScoresDates(scoresDates);
       } catch (error) {
+        console.error("Error exporting data:", error);
         Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
       }
-
-      const scoresDates = [];
-      querySnapshot.forEach(async (doc) => {
-        const docRef = doc.ref;
-        const docSnapshot = await getDoc(docRef);
-        const scoresValue = docSnapshot.data().date.toDate();
-        const day = scoresValue.getDate().toString().padStart(2, "0");
-        const month = (scoresValue.getMonth() + 1).toString().padStart(2, "0");
-        const year = scoresValue.getFullYear();
-        const formattedDate = `${day}/${month}/${year}`;
-        if (!scoresDates.includes(formattedDate)) {
-          scoresDates.push(formattedDate);
-        }
-        setScoresDates(scoresDates);
-      });
     }
   };
-
-  // useEffect(() => {}, [scoresDates]);
+  
 
   const check = async (clickedDate) => {
     if (clickedDate === selectedDate) {
-      setSelectedDate(null); // Date is already selected, toggle it off
+      setSelectedDate(null); 
     } else {
-      setSelectedDate(clickedDate); // Select a new date
+      setSelectedDate(clickedDate); 
     }
-
 
     const dateParts = clickedDate.split("/");
     const dateObject = new Date(
@@ -143,12 +140,17 @@ const ScoresData = () => {
 
     try {
       const scoresRef = collection(db, "Scores");
-      for (const temp of scoresIds) {
-        const q = query(scoresRef, where("__name__", "==", temp));
-        const querySnapshot = await getDocs(q);
+      const scoresQueries = scoresIds.map((temp) =>
+        query(scoresRef, where("__name__", "==", temp))
+      );
+      
+      const scoresQuerySnapshots = await Promise.all(
+        scoresQueries.map((q) => getDocs(q))
+      );
 
+      scoresQuerySnapshots.forEach((querySnapshot) => {
         querySnapshot.forEach((doc) => {
-          if (timestamp === doc.data().date.seconds)
+          if (timestamp === doc.data().date.seconds) {
             studentNames.push([
               doc.data().student_name,
               doc.data().courseName,
@@ -156,8 +158,9 @@ const ScoresData = () => {
               doc.data().score,
               doc.data().note,
             ]);
+          }
         });
-      }
+      });
 
       setScoresStudentsForShow(studentNames);
 
@@ -176,7 +179,9 @@ const ScoresData = () => {
       );
 
       setResultObject(result);
-    } catch (error) {
+    } 
+    
+    catch (error) {
       Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
@@ -217,7 +222,11 @@ const ScoresData = () => {
             <TouchableOpacity onPress={handleExportData}>
               <Text style={styles.continueButtonText}>הוצא נתונים</Text>
             </TouchableOpacity>
+
+          
           </View>
+
+          
 
           {scoresDates.map((item) => (
             <TouchableOpacity onPress={() => check(item)} key={item}>

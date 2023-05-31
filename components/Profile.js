@@ -8,6 +8,7 @@ import {
   Animated,
   LayoutAnimation,
   TextInput,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Entypo, MaterialIcons } from "@expo/vector-icons";
@@ -98,120 +99,13 @@ const Profile = () => {
   };
 
   return (
-    <View>
-      <Toolbar />
-      <View style={styles.title}>
-        <Text style={styles.pageTitle}>האיזור אישי: </Text>
-      </View>
-
-      <View style={[{ padding: 20 }]}>
-        <Text
-          style={[
-            {
-              textAlign: "right",
-              fontSize: 24,
-              fontWeight: "bold",
-              textDecorationLine: "underline",
-            },
-          ]}
-        >
-          פרטים אישיים-{" "}
-        </Text>
-
-        <View style={styles.row}>
-          <Entypo name="edit" size={24} color="black" />
-          <Text
-            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
-          >
-            שם פרטי:{" "}
-          </Text>
-          <Text style={[{ textAlign: "right", fontSize: 20 }]}>
-            {userData.first_name}{" "}
-          </Text>
+    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+      <View>
+        <Toolbar />
+        <View style={styles.title}>
+          <Text style={styles.pageTitle}>האיזור אישי: </Text>
         </View>
 
-        <View style={styles.row}>
-          <Entypo name="edit" size={24} color="black" />
-          <Text
-            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
-          >
-            שם משפחה:
-          </Text>
-          <Text style={[{ textAlign: "right", fontSize: 20 }]}>
-            {userData.last_name}{" "}
-          </Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text
-            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
-          >
-            כתובת דוא"ל:{" "}
-          </Text>
-          <Text style={[{ textAlign: "right", fontSize: 20 }]}>
-            {userData.email}{" "}
-          </Text>
-        </View>
-
-        <View style={styles.row}>
-          <Entypo name="edit" size={24} color="black" />
-          <Text
-            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
-          >
-            שם ביה"ס:
-          </Text>
-          <Text style={[{ textAlign: "right", fontSize: 20 }]}>
-            {userData.school_name}{" "}
-          </Text>
-        </View>
-      </View>
-
-      <View style={[{ padding: 20 }]}>
-        <Text
-          style={[
-            {
-              textAlign: "right",
-              fontSize: 24,
-              fontWeight: "bold",
-              textDecorationLine: "underline",
-            },
-          ]}
-        >
-          התאמה אישית-{" "}
-        </Text>
-        <Text style={[{ textAlign: "right", fontSize: 18, color: "red" }]}>
-          בחר/י את רגישות ההתראות להתנהגויות בכיתה
-        </Text>
-
-        <RadioButton.Group
-          onValueChange={(value) => setChecked(value)}
-          value={checked}
-        >
-          <View style={styles.radioButtonContainer}>
-            <RadioButton.Item
-              label="רגישות גבוהה"
-              value="high"
-              style={styles.radioButtonItem}
-            />
-          </View>
-          <View style={styles.radioButtonContainer}>
-            <RadioButton.Item
-              label="רגישות בינונית"
-              value="medium"
-              style={styles.radioButtonItem}
-            />
-          </View>
-          <View style={styles.radioButtonContainer}>
-            <RadioButton.Item
-              label="רגישות נמוכה"
-              value="low"
-              style={styles.radioButtonItem}
-            />
-          </View>
-        </RadioButton.Group>
-      </View>
-
-      {info === false ? (
         <View style={[{ padding: 20 }]}>
           <Text
             style={[
@@ -223,81 +117,58 @@ const Profile = () => {
               },
             ]}
           >
-            הגדר/י 2 נושאים לדיווח לפי רצונך:{" "}
+            פרטים אישיים-{" "}
           </Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={(text) => setMyChoice1(text)}
-            value={myChoice1}
-            placeholder="נושא 1"
-          />
-          <Text>בחר/י את אפשרות הדיווח:</Text>
 
-          <View>
-            <TouchableOpacity
-              onPress={() => setIcons1(true)}
-              style={{ flexDirection: "row", alignItems: "center" }}
+          <View style={styles.row}>
+            <Entypo name="edit" size={24} color="black" />
+            <Text
+              style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
             >
-              <RadioButton
-                value={icons1}
-                status={icons1 ? "checked" : "unchecked"}
-                onPress={() => setIcons1(true)}
-              />
-
-              <Text>אייקונים והערות</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setIcons1(false)}
-              style={{ flexDirection: "row", alignItems: "center" }}
-            >
-              <RadioButton
-                value={!icons1}
-                status={!icons1 ? "checked" : "unchecked"}
-                onPress={() => setIcons1(false)}
-              />
-              <Text>הערות בלבד</Text>
-            </TouchableOpacity>
+              שם פרטי:{" "}
+            </Text>
+            <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+              {userData.first_name}{" "}
+            </Text>
           </View>
 
-          <TextInput
-            style={styles.input}
-            onChangeText={(text) => setMyChoice2(text)}
-            value={myChoice2}
-            placeholder="נושא 2"
-          />
-
-          <View>
-            <TouchableOpacity
-              onPress={() => setIcons2(true)}
-              style={{ flexDirection: "row", alignItems: "center" }}
+          <View style={styles.row}>
+            <Entypo name="edit" size={24} color="black" />
+            <Text
+              style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
             >
-              <RadioButton
-                value={icons2}
-                status={icons2 ? "checked" : "unchecked"}
-                onPress={() => setIcons2(true)}
-              />
-
-              <Text>אייקונים והערות</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setIcons2(false)}
-              style={{ flexDirection: "row", alignItems: "center" }}
-            >
-              <RadioButton
-                value={!icons2}
-                status={!icons2 ? "checked" : "unchecked"}
-                onPress={() => setIcons2(false)}
-              />
-              <Text>הערות בלבד</Text>
-            </TouchableOpacity>
+              שם משפחה:
+            </Text>
+            <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+              {userData.last_name}{" "}
+            </Text>
           </View>
 
-          <TouchableOpacity style={styles.saveButton} onPress={saveNames}>
-            <Text style={styles.buttonText}>Save names</Text>
-          </TouchableOpacity>
+          <View style={styles.row}>
+            <Text
+              style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
+            >
+              כתובת דוא"ל:{" "}
+            </Text>
+            <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+              {userData.email}{" "}
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Entypo name="edit" size={24} color="black" />
+            <Text
+              style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
+            >
+              שם ביה"ס:
+            </Text>
+            <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+              {userData.school_name}{" "}
+            </Text>
+          </View>
         </View>
-      ) : (
-        <View>
+
+        <View style={[{ padding: 20 }]}>
           <Text
             style={[
               {
@@ -308,45 +179,181 @@ const Profile = () => {
               },
             ]}
           >
-            נושאי הדיווח האישיים:{" "}
+            התאמה אישית-{" "}
+          </Text>
+          <Text style={[{ textAlign: "right", fontSize: 18, color: "red" }]}>
+            בחר/י את רגישות ההתראות להתנהגויות בכיתה
           </Text>
 
-          <View style={styles.row}>
-            <Text
-              style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
-            >
-              {" "}
-              [1]
-            </Text>
-            <Text style={[{ textAlign: "right", fontSize: 20 }]}>
-              {myChoice1}{" "}
-            </Text>
-          </View>
-
-          <View style={styles.row}>
-            <Text
-              style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
-            >
-              {" "}
-              [2]
-            </Text>
-            <Text style={[{ textAlign: "right", fontSize: 20 }]}>
-              {myChoice2}{" "}
-            </Text>
-          </View>
+          <RadioButton.Group
+            onValueChange={(value) => setChecked(value)}
+            value={checked}
+          >
+            <View style={styles.radioButtonContainer}>
+              <RadioButton.Item
+                label="רגישות גבוהה"
+                value="high"
+                style={styles.radioButtonItem}
+              />
+            </View>
+            <View style={styles.radioButtonContainer}>
+              <RadioButton.Item
+                label="רגישות בינונית"
+                value="medium"
+                style={styles.radioButtonItem}
+              />
+            </View>
+            <View style={styles.radioButtonContainer}>
+              <RadioButton.Item
+                label="רגישות נמוכה"
+                value="low"
+                style={styles.radioButtonItem}
+              />
+            </View>
+          </RadioButton.Group>
         </View>
-      )}
 
-      <View style={[{ flex: 1, alignItems: "center" }]}>
-        <TouchableOpacity
-          style={styles.back}
-          onPress={() => navigation.navigate("HomePage")}
-        >
-          <MaterialIcons name="navigate-next" size={24} color="black" />
-          <Text style={[{ textAlign: "left" }]}>הקודם</Text>
-        </TouchableOpacity>
+        {info === false ? (
+          <View style={[{ padding: 20 }]}>
+            <Text
+              style={[
+                {
+                  textAlign: "right",
+                  fontSize: 24,
+                  fontWeight: "bold",
+                  textDecorationLine: "underline",
+                },
+              ]}
+            >
+              הגדר/י 2 נושאים לדיווח לפי רצונך:{" "}
+            </Text>
+            <TextInput
+              style={styles.input}
+              onChangeText={(text) => setMyChoice1(text)}
+              value={myChoice1}
+              placeholder="נושא 1"
+            />
+            <Text>בחר/י את אפשרות הדיווח:</Text>
+
+            <View>
+              <TouchableOpacity
+                onPress={() => setIcons1(true)}
+                style={{ flexDirection: "row", alignItems: "center" }}
+              >
+                <RadioButton
+                  value={icons1}
+                  status={icons1 ? "checked" : "unchecked"}
+                  onPress={() => setIcons1(true)}
+                />
+
+                <Text>אייקונים והערות</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setIcons1(false)}
+                style={{ flexDirection: "row", alignItems: "center" }}
+              >
+                <RadioButton
+                  value={!icons1}
+                  status={!icons1 ? "checked" : "unchecked"}
+                  onPress={() => setIcons1(false)}
+                />
+                <Text>הערות בלבד</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.input}
+              onChangeText={(text) => setMyChoice2(text)}
+              value={myChoice2}
+              placeholder="נושא 2"
+            />
+
+            <View>
+              <TouchableOpacity
+                onPress={() => setIcons2(true)}
+                style={{ flexDirection: "row", alignItems: "center" }}
+              >
+                <RadioButton
+                  value={icons2}
+                  status={icons2 ? "checked" : "unchecked"}
+                  onPress={() => setIcons2(true)}
+                />
+
+                <Text>אייקונים והערות</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setIcons2(false)}
+                style={{ flexDirection: "row", alignItems: "center" }}
+              >
+                <RadioButton
+                  value={!icons2}
+                  status={!icons2 ? "checked" : "unchecked"}
+                  onPress={() => setIcons2(false)}
+                />
+                <Text>הערות בלבד</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.saveButton} onPress={saveNames}>
+              <Text style={styles.buttonText}>Save names</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View>
+            <Text
+              style={[
+                {
+                  textAlign: "right",
+                  fontSize: 24,
+                  fontWeight: "bold",
+                  textDecorationLine: "underline",
+                },
+              ]}
+            >
+              נושאי הדיווח האישיים:{" "}
+            </Text>
+
+            <View style={styles.row}>
+              <Text
+                style={[
+                  { textAlign: "right", fontWeight: "bold", fontSize: 20 },
+                ]}
+              >
+                {" "}
+                [1]
+              </Text>
+              <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+                {myChoice1}{" "}
+              </Text>
+            </View>
+
+            <View style={styles.row}>
+              <Text
+                style={[
+                  { textAlign: "right", fontWeight: "bold", fontSize: 20 },
+                ]}
+              >
+                {" "}
+                [2]
+              </Text>
+              <Text style={[{ textAlign: "right", fontSize: 20 }]}>
+                {myChoice2}{" "}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        <View style={[{ flex: 1, alignItems: "center" }]}>
+          <TouchableOpacity
+            style={styles.back}
+            onPress={() => navigation.navigate("HomePage")}
+          >
+            <MaterialIcons name="navigate-next" size={24} color="black" />
+            <Text style={[{ textAlign: "left" }]}>הקודם</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

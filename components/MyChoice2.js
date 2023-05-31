@@ -27,7 +27,7 @@ const MyChoice2 = ({ route }) => {
   const [students, setStudents] = useState([]);
   const [dateString, setDateString] = useState("");
   const [validDate, setValidDate] = useState(false);
-  const [icons1, setIcons1] = useState();
+  const [icons2, setIcons2] = useState();
   const [freeText, setFreeText] = useState([]);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const MyChoice2 = ({ route }) => {
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        setIcons1(data.icons1);
+        setIcons2(data.icons2);
       });
     };
 
@@ -107,6 +107,7 @@ const MyChoice2 = ({ route }) => {
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return null;
     }
 
@@ -114,7 +115,7 @@ const MyChoice2 = ({ route }) => {
   }
 
   const createReport = async () => {
-    if (icons1 === true) {
+    if (icons2 === true) {
       const selectedValuesArray = Object.values(selectedValues);
       if (selectedValuesArray.length < students.length) {
         Alert.alert("שגיאה", "חסר שדות");
@@ -171,6 +172,10 @@ const MyChoice2 = ({ route }) => {
                     myChoice: selectedValues[student.id],
                     s_id: student.id,
                     note: freeText[i],
+                    t_id: auth.currentUser.uid,
+                    class_name: className,
+                    courseName: courseName,
+                    student_name: student.student_name,
                   };
                 });
 
@@ -200,6 +205,10 @@ const MyChoice2 = ({ route }) => {
             myChoice: selectedValues[student.id],
             s_id: student.id,
             note: freeText[i],
+            t_id: auth.currentUser.uid,
+            class_name: className,
+            courseName: courseName,
+            student_name: student.student_name,
           };
         });
 
@@ -244,6 +253,9 @@ const MyChoice2 = ({ route }) => {
         where("course_id", "==", course_id)
       );
       const querySnapshot = await getDocs(q);
+      const startDateArray = dateString.split("/");
+    const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+    const startDateTime = new Date(startDateISO);
       if (querySnapshot.size > 0) {
         Alert.alert(
           "Add report",
@@ -261,9 +273,13 @@ const MyChoice2 = ({ route }) => {
                   return {
                     course_id: course_id,
                     class_id: classId,
-                    date: dateString,
+                    date: startDateTime,
                     myChoice: freeText[i],
                     s_id: student.id,
+                    t_id: auth.currentUser.uid,
+                    class_name: className,
+                    courseName: courseName,
+                    student_name: student.student_name,
                   };
                 });
 
@@ -289,9 +305,13 @@ const MyChoice2 = ({ route }) => {
           return {
             course_id: course_id,
             class_id: classId,
-            date: dateString,
+            date: startDateTime,
             myChoice: freeText[i],
             s_id: student.id,
+            t_id: auth.currentUser.uid,
+            class_name: className,
+            courseName: courseName,
+            student_name: student.student_name,
           };
         });
 
@@ -335,7 +355,7 @@ const MyChoice2 = ({ route }) => {
         )}
       </View>
 
-      {icons1 ? (
+      {icons2 ? (
         <View style={{ marginTop: 10 }}>
           <View
             style={{ flexDirection: "row", justifyContent: "space-around" }}

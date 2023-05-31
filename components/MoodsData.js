@@ -7,11 +7,12 @@ import {
   TextInput,
   ScrollView,
   SectionList,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import Toolbar from "./Toolbar";
-import { collection, query, where, getDocs, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { collection, query, where, getDocs, getDoc, doc } from "firebase/firestore";
+import { db, auth } from "./firebase";
 import { Entypo } from "@expo/vector-icons";
 
 const MoodsData = ({ route }) => {
@@ -32,6 +33,13 @@ const MoodsData = ({ route }) => {
   const [bedIds, setBedIds] = useState([]);
   const [showMedium, setShowMedium] = useState(false);
   const [showBed, setShowBed] = useState(false);
+  const [clickedDate, setClickedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [percentageMedium, setPercentageMedium] = useState(0);
+  const [percentageSad, setPercentageSad] = useState(0);
+
+  const [numOfStudents, setNumOfStudents]= useState(0);
+  const [show, setShow]= useState(false);
 
   function parseDateString(inputString) {
     const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
@@ -71,23 +79,46 @@ const MoodsData = ({ route }) => {
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return false;
     }
 
     return true;
   }
 
+
   const handleChangeStartDate = (text) => {
     setStartDateString(text);
-    setStartDate(parseDateString(text, "dd/mm/yyyy"));
+    const startDateArray = text.split("/");
+    const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+    const startDateTime = new Date(startDateISO);
+    setStartDate(startDateTime);
     setValidDate(parseDateString(text));
   };
-
+  
   const handleChangeEndDate = (text) => {
     setEndDateString(text);
-    setEndDate(parseDateString(text, "dd/mm/yyyy"));
+    const endDateArray = text.split("/");
+    const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
+    const endDateTime = new Date(endDateISO);
+    setEndDate(endDateTime);
     setValidDateTwo(parseDateString(text));
   };
+  
+  function countDays(startDate, endDate) {
+    if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
+      throw new Error("startDate and endDate must be Date objects");
+    }
+    const oneDay = 24 * 60 * 60 * 1000; 
+
+    startDate.setHours(0, 0, 0, 0);
+  
+    endDate.setHours(23, 59, 59, 999);
+  
+    const diffDays = Math.round((endDate - startDate) / oneDay) ;
+  
+    return diffDays;
+  }
 
   const handleExportData = async () => {
     const startDateArray = startDateString.split("/");
@@ -96,85 +127,135 @@ const MoodsData = ({ route }) => {
     const endDateArray = endDateString.split("/");
     const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
     const endDateTime = new Date(endDateISO);
+
+    if (isNaN(startDateTime) || isNaN(endDateTime)) {
+      Alert.alert("Invalid date format");
+      return;
+    }
     let querySnapshot;
+
+
     if (startDate && endDate) {
       try {
         const categoryRef = collection(db, category);
         const q = query(
           categoryRef,
           where("date", ">=", startDateTime),
-          where("date", "<=", endDateTime)
+          where("date", "<=", endDateTime),
+          where("t_id", "==", auth.currentUser.uid)
         );
+
         querySnapshot = await getDocs(q);
+        const mediumIdst = [];
+        const bedIdst = [];
+
+        if (category === "Mood") {
+          querySnapshot.forEach((doc) => {
+            if (doc.data().mood === "medium") {
+              mediumIdst.push(doc.id);
+            } else if (doc.data().mood === "bed") {
+              bedIdst.push(doc.id);
+            }
+          });
+          setMediumIds(mediumIdst);
+          setBedIds(bedIdst);
+
+          const moodsDates = [];
+          await Promise.all(
+            querySnapshot.docs.map(async (doc) => {
+              if (doc.data().mood === "medium" || doc.data().mood === "bed") {
+                const docRef = doc.ref;
+                const docSnapshot = await getDoc(docRef);
+                const moodsValue = docSnapshot.data().date.toDate();
+                const day = moodsValue.getDate().toString().padStart(2, "0");
+                const month = (moodsValue.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0");
+                const year = moodsValue.getFullYear();
+                const formattedDate = `${day}/${month}/${year}`;
+                if (!moodsDates.includes(formattedDate)) {
+                  moodsDates.push(formattedDate);
+                }
+              }
+            })
+          );
+
+          setDates(moodsDates);
+
+          const classId = querySnapshot.docs[0].data().class_id;
+          const classDoc = await getDoc(doc(db, "Classes", classId));
+          const num = classDoc.data().numOfStudents || 1;
+          setNumOfStudents(num);
+          const days= countDays(startDate, endDate);
+          const temp = (mediumIdst.length*100)/ (numOfStudents*days);
+          setPercentageMedium(temp.toFixed(2));
+          const temp1 = (bedIdst.length*100)/ (numOfStudents*days);
+          setPercentageSad(temp1.toFixed(2));
+          setShow(true);
+        } 
+        
+        else if (category === "FriendStatus") {
+          querySnapshot.forEach((doc) => {
+            if (doc.data().friendStatus === "medium") {
+              mediumIdst.push(doc.id);
+            } else if (doc.data().friendStatus === "bed") {
+              bedIdst.push(doc.id);
+            }
+          });
+          setMediumIds(mediumIdst);
+          setBedIds(bedIdst);
+
+          const moodsDates = [];
+          await Promise.all(
+            querySnapshot.docs.map(async (doc) => {
+              if (
+                doc.data().friendStatus === "medium" ||
+                doc.data().friendStatus === "bed"
+              ) {
+                const docRef = doc.ref;
+                const docSnapshot = await getDoc(docRef);
+                const moodsValue = docSnapshot.data().date.toDate();
+                const day = moodsValue.getDate().toString().padStart(2, "0");
+                const month = (moodsValue.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0");
+                const year = moodsValue.getFullYear();
+                const formattedDate = `${day}/${month}/${year}`;
+                if (!moodsDates.includes(formattedDate)) {
+                  moodsDates.push(formattedDate);
+                }
+              }
+            })
+          );
+
+          setDates(moodsDates);
+          
+          const classId = querySnapshot.docs[0].data().class_id;
+          const classDoc = await getDoc(doc(db, "Classes", classId));
+          const num = classDoc.data().numOfStudents || 1;
+          setNumOfStudents(num);
+          const days= countDays(startDate, endDate);
+          const temp = (mediumIdst.length*100)/ (numOfStudents*days);
+          setPercentageMedium(temp.toFixed(2));
+          const temp1 = (bedIdst.length*100)/ (numOfStudents*days);
+          setPercentageSad(temp1.toFixed(2));
+          setShow(true);
+        }
       } catch (error) {
-        Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
-      }
-      const mediumIdst = [];
-      const bedIdst = [];
-      if (category === "Mood") {
-        querySnapshot.forEach((doc) => {
-          if (doc.data().mood === "medium") {
-            mediumIdst.push(doc.id);
-          } else if (doc.data().mood === "bed") {
-            bedIdst.push(doc.id);
-          }
-          setMediumIds(mediumIdst);
-          setBedIds(bedIdst);
-          const moodsDates = [];
-          querySnapshot.forEach(async (doc) => {
-            if (doc.data().mood === "medium" || doc.data().mood === "bed") {
-              const docRef = doc.ref;
-              const docSnapshot = await getDoc(docRef);
-              const moodsValue = docSnapshot.data().date.toDate();
-              const day = moodsValue.getDate().toString().padStart(2, "0");
-              const month = (moodsValue.getMonth() + 1)
-                .toString()
-                .padStart(2, "0");
-              const year = moodsValue.getFullYear();
-              const formattedDate = `${day}/${month}/${year}`;
-              if (!moodsDates.includes(formattedDate)) {
-                moodsDates.push(formattedDate);
-              }
-            }
-            setDates(moodsDates);
-          });
-        });
-      } else if (category === "FriendStatus") {
-        querySnapshot.forEach((doc) => {
-          if (doc.data().friendStatus === "medium") {
-            mediumIdst.push(doc.id);
-          } else if (doc.data().friendStatus === "bed") {
-            bedIdst.push(doc.id);
-          }
-          setMediumIds(mediumIdst);
-          setBedIds(bedIdst);
-          const moodsDates = [];
-          querySnapshot.forEach(async (doc) => {
-            if (
-              doc.data().friendStatus === "medium" ||
-              doc.data().friendStatus === "bed"
-            ) {
-              const docRef = doc.ref;
-              const docSnapshot = await getDoc(docRef);
-              const moodsValue = docSnapshot.data().date.toDate();
-              const day = moodsValue.getDate().toString().padStart(2, "0");
-              const month = (moodsValue.getMonth() + 1)
-                .toString()
-                .padStart(2, "0");
-              const year = moodsValue.getFullYear();
-              const formattedDate = `${day}/${month}/${year}`;
-              if (!moodsDates.includes(formattedDate)) {
-                moodsDates.push(formattedDate);
-              }
-            }
-            setDates(moodsDates);
-          });
-        });
+        Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+        console.error("Error exporting data:", error);
       }
     }
   };
 
   const check = async (clickedDate) => {
+    if (clickedDate === selectedDate) {
+      setSelectedDate(null);
+    } else {
+      setSelectedDate(clickedDate);
+    }
+
+    setClickedDate(clickedDate);
     setShowMedium(false);
     setShowBed(false);
 
@@ -221,7 +302,7 @@ const MoodsData = ({ route }) => {
       setMediumResult(result);
       setShowMedium(true);
     } catch (error) {
-      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
 
     try {
@@ -258,7 +339,7 @@ const MoodsData = ({ route }) => {
       setBedResult(result1);
       setShowBed(true);
     } catch (error) {
-      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
 
@@ -295,10 +376,7 @@ const MoodsData = ({ route }) => {
               <Text style={{ color: "red" }}>Incorrect date</Text>
             )}
 
-            <TouchableOpacity
-              style={styles.continueButton}
-              onPress={handleExportData}
-            >
+            <TouchableOpacity onPress={handleExportData}>
               <Text style={styles.continueButtonText}>הוצא נתונים</Text>
             </TouchableOpacity>
           </View>
@@ -308,44 +386,71 @@ const MoodsData = ({ route }) => {
               <View style={styles.dateItem}>
                 <Text style={styles.dateText}>{item}</Text>
               </View>
+              {selectedDate === item && (
+                <View>
+                  {Object.entries(mediumResult).length > 0 && (
+                    <View>
+                      <Text></Text>
+                      <Entypo name="emoji-neutral" size={24} color="black" />
+                      {Object.entries(mediumResult).map(
+                        ([courseName, students]) => (
+                          <View key={courseName}>
+                            <Text style={{ fontWeight: "bold" }}>
+                              {courseName}
+                            </Text>
+                            {students.map((student, index) => (
+                              <Text key={`${student}-${index}`}>
+                                {student.student}{" "}
+                                {student.note ? `(${student.note})` : ""}
+                              </Text>
+                            ))}
+                          </View>
+                        )
+                      )}
+                    </View>
+                  )}
+
+                  {Object.entries(bedResult).length > 0 && (
+                    <View>
+                      <Text></Text>
+                      <Entypo name="emoji-sad" size={24} color="black" />
+                      {Object.entries(bedResult).map(
+                        ([courseName, students]) => (
+                          <View key={courseName}>
+                            <Text style={{ fontWeight: "bold" }}>
+                              {courseName}
+                            </Text>
+                            {students.map((student, index) => (
+                              <Text key={`${student}-${index}`}>
+                                {student.student}{" "}
+                                {student.note ? `(${student.note})` : ""}
+                              </Text>
+                            ))}
+                          </View>
+                        )
+                      )}
+                    </View>
+                  )}
+                </View>
+              )}
             </TouchableOpacity>
           ))}
+          {show === true && (
 
-          <View>
-            {mediumResult && Object.keys(mediumResult).length > 0 && (
-              <View>
-                <Entypo name="emoji-neutral" size={24} color="black" />
-                {Object.entries(mediumResult).map(([course, students]) => (
-                  <View key={course}>
-                    <Text style={{ fontWeight: "bold" }}>{course}</Text>
-                    {students.map(({ student, note }) => (
-                      <Text key={`${student}-${note}`}>
-                        {student} {note ? `(${note})` : ""}
-                      </Text>
-                    ))}
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
+<View>
+  <Text style={styles.percentageData}>
+    בטווח התאריכים הנ"ל ישנם 
 
-          <View>
-            {bedResult && Object.keys(bedResult).length > 0 && (
-              <View>
-                <Entypo name="emoji-sad" size={24} color="black" />
-                {Object.entries(mediumResult).map(([course, students]) => (
-                  <View key={course}>
-                    <Text style={{ fontWeight: "bold" }}>{course}</Text>
-                    {students.map(({ student, note }) => (
-                      <Text key={`${student}-${note}`}>
-                        {student} {note ? `(${note})` : ""}
-                      </Text>
-                    ))}
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
+  {percentageMedium}% של דיווחים בעלי אייקון עצוב.
+  </Text>
+  <Text style={styles.percentageData}>
+  בטווח התאריכים הנ"ל ישנם 
+
+{percentageSad}% של דיווחים בעלי אייקון עצוב.
+
+  </Text>
+</View>
+)}    
         </View>
       </View>
     </ScrollView>
@@ -406,4 +511,9 @@ const styles = StyleSheet.create({
     margin: 12,
     borderRadius: 10,
   },
+  percentageData: {
+    fontSize:18,
+    fontWeight:'bold',
+
+  }
 });

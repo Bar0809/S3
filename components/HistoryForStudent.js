@@ -17,6 +17,7 @@ import { db, auth } from "./firebase";
 import { RadioButton } from "react-native-paper";
 import { Entypo } from "@expo/vector-icons";
 
+
 const HistoryForStudent = ({ route }) => {
   const { student_name } = route.params;
   const { s_id } = route.params;
@@ -42,7 +43,6 @@ const HistoryForStudent = ({ route }) => {
   const [dietResult, setDietResult] = useState([]);
   const [appearancesResult, setAppearancesResult] = useState([]);
   const [eventsResult, setEventsResult] = useState([]);
-
   const [moodForShow, setMoodForShow] = useState(false);
   const [friendStatusForShow, setFriendStatusForShow] = useState(false);
   const [dietForShow, setDietForShow] = useState(false);
@@ -50,11 +50,55 @@ const HistoryForStudent = ({ route }) => {
   const [eventsForShow, setEventsForShow] = useState(false);
   const [presenceForShow, setPresenceForShow] = useState(false);
   const [scoreForShow, setScoreForShow] = useState(false);
+  const [myChoice1ForShow, setMyChoice1ForShow] = useState(false);
+  const [myChoice2ForShow, setMyChoice2ForShow] = useState(false);
+  const [icon1, setIcon1] = useState(false);
+  const [icon2, setIcon2] = useState(false);
+  const [myChoice1, setMyChoice1] = useState("");
+  const [myChoice2, setMyChoice2] = useState("");
+  const [myChoice1Result, setMyChoice1Result] = useState([]);
+  const [myChoice2Result, setMyChoice2Result] = useState([]);
+
+  useEffect(() => {
+    const getIcons = async () => {
+      const iconsRef = collection(db, "users");
+      const q = query(iconsRef, where("t_id", "==", auth.currentUser.uid));
+      const querySnapshot = await getDocs(q);
+      const icons = [];
+      querySnapshot.forEach((doc) => {
+        const mychoice1 = doc.data().icons1;
+        icons.push(mychoice1);
+        const mychoice2 = doc.data().icons2;
+        icons.push(mychoice2);
+        const categoryName1 = doc.data().myChoice1;
+        icons.push(categoryName1);
+        const categoryName2 = doc.data().myChoice2;
+        icons.push(categoryName2);
+      });
+      setIcon1(icons[0]);
+      setIcon2(icons[1]);
+      setMyChoice1(icons[2]);
+      setMyChoice2(icons[3]);
+    };
+    getIcons();
+  }, []);
 
   const handlePresenceButton = () => {
     setPresenceForShow((prevState) => !prevState);
     if (!presenceForShow) {
       getPresence();
+    }
+  };
+  const handleMyChoice1Button = () => {
+    setMyChoice1ForShow((prevState) => !prevState);
+    if (!myChoice1ForShow) {
+      getMyChoice1();
+    }
+  };
+  const handleMyChoice2Button = () => {
+    setMyChoice2ForShow((prevState) => !prevState);
+    if (!myChoice2ForShow) {
+      getMyChoice2();
     }
   };
 
@@ -377,25 +421,7 @@ const HistoryForStudent = ({ route }) => {
         Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
         console.log(error.message);
       }
-      try {
-        const categoryRef = collection(db, "Diet");
-        const q = query(
-          categoryRef,
-          where("date", ">=", startDateTime),
-          where("date", "<=", endDateTime)
-          // where("t_id", "===", auth.currentUser.uid),
-          // where("s_id", "===", s_id)
-        );
-        querySnapshot = await getDocs(q);
-        const dietIdst = [];
-        querySnapshot.forEach((doc) => {
-          dietIdst.push(doc.id);
-        });
-
-        setDietIds(dietIdst);
-      } catch (error) {
-        Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
-      }
+   
     }
   };
 
@@ -499,6 +525,199 @@ const HistoryForStudent = ({ route }) => {
     }
   };
 
+  const getMyChoice1 = async () => {
+    if (icon1 === true) {
+      const startDateArray = startDateString.split("/");
+      const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+      const startDateTime = new Date(startDateISO);
+      const endDateArray = endDateString.split("/");
+      const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
+      const endDateTime = new Date(endDateISO);
+      let querySnapshot;
+      if (startDate && endDate) {
+        try {
+          const categoryRef = collection(db, "MyChoice1");
+          const q = query(
+            categoryRef,
+            where("date", ">=", startDateTime),
+            where("date", "<=", endDateTime),
+            where("t_id", "==", auth.currentUser.uid),
+            where("s_id", "==", s_id)
+          );
+
+          const querySnapshot = await getDocs(q);
+
+          const result = {};
+          querySnapshot.forEach((doc) => {
+            const courseName = doc.data().courseName;
+            const myChoice = doc.data().myChoice;
+            const note = doc.data().note;
+            const presenceValue = doc.data().date.toDate();
+            const day = presenceValue.getDate().toString().padStart(2, "0");
+            const month = (presenceValue.getMonth() + 1)
+              .toString()
+              .padStart(2, "0");
+            const year = presenceValue.getFullYear();
+            const date = `${day}/${month}/${year}`;
+
+            if (!result[courseName]) {
+              result[courseName] = [];
+            }
+            result[courseName].push({ date, myChoice, note });
+            setMyChoice1ForShow(true);
+          });
+
+          setMyChoice1Result(result);
+        } catch (error) {
+          Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+          console.log(error.message);
+        }
+      }
+    } else if (icon1 === false) {
+      const startDateArray = startDateString.split("/");
+      const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+      const startDateTime = new Date(startDateISO);
+      const endDateArray = endDateString.split("/");
+      const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
+      const endDateTime = new Date(endDateISO);
+      let querySnapshot;
+      if (startDate && endDate) {
+        try {
+          const categoryRef = collection(db, "MyChoice1");
+          const q = query(
+            categoryRef,
+            where("date", ">=", startDateTime),
+            where("date", "<=", endDateTime),
+            where("t_id", "==", auth.currentUser.uid),
+            where("s_id", "==", s_id)
+          );
+
+          const querySnapshot = await getDocs(q);
+
+          const result = {};
+          querySnapshot.forEach((doc) => {
+            const courseName = doc.data().courseName;
+            const myChoice = doc.data().myChoice;
+            const presenceValue = doc.data().date.toDate();
+            const day = presenceValue.getDate().toString().padStart(2, "0");
+            const month = (presenceValue.getMonth() + 1)
+              .toString()
+              .padStart(2, "0");
+            const year = presenceValue.getFullYear();
+            const date = `${day}/${month}/${year}`;
+
+            if (!result[courseName]) {
+              result[courseName] = [];
+            }
+            result[courseName].push({ date, myChoice });
+            setMyChoice1ForShow(true);
+          });
+
+          setMyChoice1Result(result);
+        } catch (error) {
+          Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+          console.log(error.message);
+        }
+      }
+    }
+  };
+
+  const getMyChoice2 = async () => {
+    if (icon2 === true) {
+      const startDateArray = startDateString.split("/");
+      const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+      const startDateTime = new Date(startDateISO);
+      const endDateArray = endDateString.split("/");
+      const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
+      const endDateTime = new Date(endDateISO);
+      let querySnapshot;
+      if (startDate && endDate) {
+        try {
+          const categoryRef = collection(db, "MyChoice2");
+          const q = query(
+            categoryRef,
+            where("date", ">=", startDateTime),
+            where("date", "<=", endDateTime),
+            where("t_id", "==", auth.currentUser.uid),
+            where("s_id", "==", s_id)
+          );
+
+          const querySnapshot = await getDocs(q);
+
+          const result = {};
+          querySnapshot.forEach((doc) => {
+            const courseName = doc.data().courseName;
+            const myChoice = doc.data().myChoice;
+            const note = doc.data().note;
+            const presenceValue = doc.data().date.toDate();
+            const day = presenceValue.getDate().toString().padStart(2, "0");
+            const month = (presenceValue.getMonth() + 1)
+              .toString()
+              .padStart(2, "0");
+            const year = presenceValue.getFullYear();
+            const date = `${day}/${month}/${year}`;
+
+            if (!result[courseName]) {
+              result[courseName] = [];
+            }
+            result[courseName].push({ date, myChoice, note });
+            setMyChoice2ForShow(true);
+          });
+
+          setMyChoice2Result(result);
+        } catch (error) {
+          Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+          console.log(error.message);
+        }
+      }
+    } else if (icon2 === false) {
+      const startDateArray = startDateString.split("/");
+      const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+      const startDateTime = new Date(startDateISO);
+      const endDateArray = endDateString.split("/");
+      const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
+      const endDateTime = new Date(endDateISO);
+      let querySnapshot;
+      if (startDate && endDate) {
+        try {
+          const categoryRef = collection(db, "MyChoice2");
+          const q = query(
+            categoryRef,
+            where("date", ">=", startDateTime),
+            where("date", "<=", endDateTime),
+            where("t_id", "==", auth.currentUser.uid),
+            where("s_id", "==", s_id)
+          );
+
+          const querySnapshot = await getDocs(q);
+
+          const result = {};
+          querySnapshot.forEach((doc) => {
+            const courseName = doc.data().courseName;
+            const myChoice = doc.data().myChoice;
+            const presenceValue = doc.data().date.toDate();
+            const day = presenceValue.getDate().toString().padStart(2, "0");
+            const month = (presenceValue.getMonth() + 1)
+              .toString()
+              .padStart(2, "0");
+            const year = presenceValue.getFullYear();
+            const date = `${day}/${month}/${year}`;
+
+            if (!result[courseName]) {
+              result[courseName] = [];
+            }
+            result[courseName].push({ date, myChoice });
+            setMyChoice2ForShow(true);
+          });
+
+          setMyChoice2Result(result);
+        } catch (error) {
+          Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+          console.log(error.message);
+        }
+      }
+    }
+  };
   const handleChangeStartDate = (text) => {
     setStartDateString(text);
     setStartDate(parseDateString(text, "dd/mm/yyyy"));
@@ -747,6 +966,112 @@ const HistoryForStudent = ({ route }) => {
                   })}
                 </View>
               ))}
+
+            <TouchableOpacity onPress={handleMyChoice1Button}>
+              <Text style={styles.continueButtonText}>{myChoice1} </Text>
+            </TouchableOpacity>
+            {myChoice1ForShow &&
+              icon1 == true &&
+              Object.entries(myChoice1Result).map(([courseName, data]) => (
+                <View key={courseName}>
+                  <Text
+                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                  >
+                    {courseName}
+                  </Text>
+                  {data.map(({ date, myChoice, note }) => {
+                    let label = myChoice;
+                    if (myChoice === "bed") {
+                      label = "לא טוב";
+                    } else {
+                      label = "טוב";
+                    }
+                    return (
+                      <Text key={date}>
+                        {`${date} -  ${label}${
+                          note !== "" ? ` (${note})` : ""
+                        }`}
+                      </Text>
+                    );
+                  })}
+                </View>
+              ))}
+            {myChoice1ForShow &&
+              icon1 === false &&
+              Object.values(myChoice1Result).map((data) => {
+                const hasNonEmptyChoice = data.some(
+                  ({ myChoice }) => myChoice !== ""
+                );
+                return (
+                  <View>
+                    {hasNonEmptyChoice ? (
+                      data.map(
+                        ({ date, myChoice }) =>
+                          myChoice !== "" && (
+                            <Text key={date}>{`${date} - ${
+                              myChoice ? `(${myChoice})` : ""
+                            }`}</Text>
+                          )
+                      )
+                    ) : (
+                      <Text>לא הוזן מידע עבור התלמיד בתאריכים אלו</Text>
+                    )}
+                  </View>
+                );
+              })}
+
+            <TouchableOpacity onPress={handleMyChoice2Button}>
+              <Text style={styles.continueButtonText}>{myChoice2} </Text>
+            </TouchableOpacity>
+            {myChoice2ForShow &&
+              icon2 == true &&
+              Object.entries(myChoice2Result).map(([courseName, data]) => (
+                <View key={courseName}>
+                  <Text
+                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                  >
+                    {courseName}
+                  </Text>
+                  {data.map(({ date, myChoice, note }) => {
+                    let label = myChoice;
+                    if (myChoice === "bed") {
+                      label = "לא טוב";
+                    } else {
+                      label = "טוב";
+                    }
+                    return (
+                      <Text key={date}>
+                        {`${date} -  ${label}${
+                          note !== "" ? ` (${note})` : ""
+                        }`}
+                      </Text>
+                    );
+                  })}
+                </View>
+              ))}
+            {myChoice2ForShow &&
+              icon2 === false &&
+              Object.values(myChoice2Result).map((data) => {
+                const hasNonEmptyChoice = data.some(
+                  ({ myChoice }) => myChoice !== ""
+                );
+                return (
+                  <View>
+                    {hasNonEmptyChoice ? (
+                      data.map(
+                        ({ date, myChoice }) =>
+                          myChoice !== "" && (
+                            <Text key={date}>{`${date} - ${
+                              myChoice ? `(${myChoice})` : ""
+                            }`}</Text>
+                          )
+                      )
+                    ) : (
+                      <Text>לא הוזן מידע עבור התלמיד בתאריכים אלו</Text>
+                    )}
+                  </View>
+                );
+              })}
           </View>
         </View>
       </View>

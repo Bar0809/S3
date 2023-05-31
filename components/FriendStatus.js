@@ -6,6 +6,7 @@ import {
   TextInput,
   FlatList,
   Alert,
+  ScrollView,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -200,6 +201,7 @@ const FriendStatus = ({ route }) => {
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return null;
     }
 
@@ -213,6 +215,8 @@ const FriendStatus = ({ route }) => {
   };
 
   return (
+    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+
     <View>
       <Toolbar />
       <View style={styles.report}>
@@ -253,60 +257,61 @@ const FriendStatus = ({ route }) => {
       </View>
 
       <FlatList
-        data={students}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => (
-          <View style={styles.nameContainer}>
-            <Text style={styles.name}>{item.student_name}</Text>
-            <View style={styles.radioButtonContainer}>
-              <TextInput
-                style={[styles.inputFreeText, { textAlign: "right" }]}
-                onChangeText={(text) => handleFreeTextChange(text, index)}
-                value={freeText[index]}
-              ></TextInput>
+  data={students}
+  keyExtractor={(item) => item.id.toString()}
+  renderItem={({ item, index }) => (
+    <View style={styles.nameContainer}>
+      <Text style={styles.name}>{item.student_name}</Text>
+      <View style={styles.radioButtonContainer}>
+        <TextInput
+          style={[styles.inputFreeText, { textAlign: "right" }]}
+          onChangeText={(text) => handleFreeTextChange(text, index)}
+          value={freeText[index]}
+        />
 
-              <RadioButton.Item
-                value="bed"
-                status={
-                  selectedValues[item.id] === "bed" ? "checked" : "unchecked"
-                }
-                onPress={() => {
-                  setSelectedValues({
-                    ...selectedValues,
-                    [item.id]: "bed",
-                  });
-                }}
-              />
+        <RadioButton.Item
+          value="bed"
+          status={
+            selectedValues[item.id] === "bed" ? "checked" : "unchecked"
+          }
+          onPress={() => {
+            setSelectedValues({
+              ...selectedValues,
+              [item.id]: "bed",
+            });
+          }}
+        />
 
-              <RadioButton.Item
-                value="medium"
-                status={
-                  selectedValues[item.id] === "medium" ? "checked" : "unchecked"
-                }
-                onPress={() => {
-                  setSelectedValues({
-                    ...selectedValues,
-                    [item.id]: "medium",
-                  });
-                }}
-              />
+        <RadioButton.Item
+          value="medium"
+          status={
+            selectedValues[item.id] === "medium" ? "checked" : "unchecked"
+          }
+          onPress={() => {
+            setSelectedValues({
+              ...selectedValues,
+              [item.id]: "medium",
+            });
+          }}
+        />
 
-              <RadioButton.Item
-                value="good"
-                status={
-                  selectedValues[item.id] === "good" ? "checked" : "unchecked"
-                }
-                onPress={() => {
-                  setSelectedValues({
-                    ...selectedValues,
-                    [item.id]: "good",
-                  });
-                }}
-              />
-            </View>
-          </View>
-        )}
-      />
+        <RadioButton.Item
+          value="good"
+          status={
+            selectedValues[item.id] === "good" ? "checked" : "unchecked"
+          }
+          onPress={() => {
+            setSelectedValues({
+              ...selectedValues,
+              [item.id]: "good",
+            });
+          }}
+        />
+      </View>
+    </View>
+  )}
+/>
+
 
       <TouchableOpacity style={[styles.butt]} onPress={createReport}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -314,6 +319,7 @@ const FriendStatus = ({ route }) => {
         </View>
       </TouchableOpacity>
     </View>
+    </ScrollView>
   );
 };
 

@@ -7,14 +7,17 @@ import {
   TextInput,
   ScrollView,
   SectionList,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import Toolbar from "./Toolbar";
-import { collection, query, where, getDocs, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { collection, query, where, getDocs, getDoc, doc } from "firebase/firestore";
+import { db, auth } from "./firebase";
 import { Entypo } from "@expo/vector-icons";
 
-const EventsData = () => {
+const EventsData = ({ route }) => {
+  const { category } = route.params;
+
   const [startDateString, setStartDateString] = useState("");
   const [endDateString, setEndDateString] = useState("");
   const [startDate, setStartDate] = useState(null);
@@ -30,6 +33,32 @@ const EventsData = () => {
   const [negativeIds, setNegativeIds] = useState([]);
   const [showPositive, setShowPositive] = useState(false);
   const [showNegative, setShowNegative] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showIcons, setShowIcons] = useState(false);
+  const [positivePercentage, setPositivePercentage] = useState(0);
+  const [negativePercentage, setNegativePercentage] = useState(0);
+  const [show, setShow] = useState(false);
+
+  const [numOfStudents, setNumOfStudents]= useState(0);
+
+  const handleDateClick = (date) => {
+    setSelectedDate(date === selectedDate ? null : date);
+  };
+  const renderEventList = (date) => {
+    const positiveEvents = positiveResult[date] || [];
+    const negativeEvents = negativeResult[date] || [];
+
+    return (
+      <div>
+        {positiveEvents.map((event, index) => (
+          <div key={index}>{event.eventType}</div>
+        ))}
+        {negativeEvents.map((event, index) => (
+          <div key={index}>{event.eventType}</div>
+        ))}
+      </div>
+    );
+  };
 
   function parseDateString(inputString) {
     const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
@@ -77,15 +106,37 @@ const EventsData = () => {
 
   const handleChangeStartDate = (text) => {
     setStartDateString(text);
-    setStartDate(parseDateString(text, "dd/mm/yyyy"));
+    const startDateArray = text.split("/");
+    const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+    const startDateTime = new Date(startDateISO);
+    setStartDate(startDateTime);
     setValidDate(parseDateString(text));
   };
-
+  
   const handleChangeEndDate = (text) => {
     setEndDateString(text);
-    setEndDate(parseDateString(text, "dd/mm/yyyy"));
+    const endDateArray = text.split("/");
+    const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
+    const endDateTime = new Date(endDateISO);
+    setEndDate(endDateTime);
     setValidDateTwo(parseDateString(text));
   };
+  
+
+  function countDays(startDate, endDate) {
+    if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
+      throw new Error("startDate and endDate must be Date objects");
+    }
+    const oneDay = 24 * 60 * 60 * 1000; 
+
+    startDate.setHours(0, 0, 0, 0);
+  
+    endDate.setHours(23, 59, 59, 999);
+  
+    const diffDays = Math.round((endDate - startDate) / oneDay) ;
+  
+    return diffDays;
+  }
 
   const handleExportData = async () => {
     const startDateArray = startDateString.split("/");
@@ -94,20 +145,25 @@ const EventsData = () => {
     const endDateArray = endDateString.split("/");
     const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
     const endDateTime = new Date(endDateISO);
+
+    if (isNaN(startDateTime) || isNaN(endDateTime)) {
+      Alert.alert("Invalid date format");
+      return;
+    }
     let querySnapshot;
     if (startDate && endDate) {
       try {
         const categoryRef = collection(db, "Events");
-        //  const q = query(categoryRef);
-
         const q = query(
           categoryRef,
           where("date", ">=", startDateTime),
-          where("date", "<=", endDateTime)
+          where("date", "<=", endDateTime),
+          where("t_id", "==", auth.currentUser.uid)
         );
         querySnapshot = await getDocs(q);
       } catch (error) {
-        Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+        Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+        console.error("Error exporting data:", error);
       }
 
       const positiveIdst = [];
@@ -121,12 +177,14 @@ const EventsData = () => {
         }
         setPositiveIds(positiveIdst);
         setNegativeIds(negativeIdst);
+      });
 
-        const evantsDates = [];
-        querySnapshot.forEach(async (doc) => {
+      const evantsDates = [];
+      await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
           if (
-            doc.data().type === "positive" ||
-            doc.data().type === "negative"
+            doc.data().type === "negative" ||
+            doc.data().type === "positive"
           ) {
             const docRef = doc.ref;
             const docSnapshot = await getDoc(docRef);
@@ -141,10 +199,22 @@ const EventsData = () => {
               evantsDates.push(formattedDate);
             }
           }
+        })
+      );
 
-          setDates(evantsDates);
-        });
-      });
+      setDates(evantsDates);
+      setShowIcons(true);
+
+      const classId = querySnapshot.docs[0].data().class_id;
+      const classDoc = await getDoc(doc(db, "Classes", classId));
+      const num = classDoc.data().numOfStudents || 1;
+      setNumOfStudents(num);
+      const days= countDays(startDate, endDate);
+      const positive = (positiveIdst.length*100)/ (numOfStudents*days);
+      setPositivePercentage(positive.toFixed(2));
+      const negative = (negativeIdst.length*100)/ (numOfStudents*days);
+      setNegativePercentage(negative.toFixed(2));
+      setShow(true);
     }
   };
 
@@ -182,7 +252,7 @@ const EventsData = () => {
 
       setDisplayPositive(positiveEventsStudentsNames);
     } catch (error) {
-      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
 
     try {
@@ -209,7 +279,7 @@ const EventsData = () => {
 
       setDisplayNegative(negativeEventsStudentsNames);
     } catch (error) {
-      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
 
@@ -224,7 +294,27 @@ const EventsData = () => {
       },
       {}
     );
-    setPositiveResult(result);
+
+    // Map the eventType values to Hebrew text
+    const mappedResult = Object.entries(result).reduce(
+      (acc, [course, students]) => {
+        students.forEach(({ eventType, ...rest }) => {
+          if (eventType === "academic Excellence") {
+            eventType = "הצטיינות לימודית";
+          } else if (eventType === "associateHonors") {
+            eventType = "הצטיינות חברתית";
+          }
+          if (!acc[course]) {
+            acc[course] = [];
+          }
+          acc[course].push({ eventType, ...rest });
+        });
+        return acc;
+      },
+      {}
+    );
+
+    setPositiveResult(mappedResult);
   }, [displayPositive]);
 
   useEffect(() => {
@@ -238,7 +328,27 @@ const EventsData = () => {
       },
       {}
     );
-    setNegativeResult(result);
+
+    // Map the eventType values to Hebrew text
+    const mappedResult = Object.entries(result).reduce(
+      (acc, [course, students]) => {
+        students.forEach(({ eventType, ...rest }) => {
+          if (eventType === "verbal violence") {
+            eventType = "אלימות מילולית";
+          } else if (eventType === "physical violence") {
+            eventType = "אלימות פיזית";
+          }
+          if (!acc[course]) {
+            acc[course] = [];
+          }
+          acc[course].push({ eventType, ...rest });
+        });
+        return acc;
+      },
+      {}
+    );
+
+    setNegativeResult(mappedResult);
   }, [displayNegative]);
 
   useEffect(() => {
@@ -248,6 +358,16 @@ const EventsData = () => {
   useEffect(() => {
     setShowNegative(true);
   }, [negativeResult]);
+
+  const renderDateList = () => {
+    return dates.map((date) => (
+      <div key={date}>
+        <div onClick={() => handleDateClick(date)}>{date}</div>
+        {selectedDate === date && renderEventList(date)}
+      </div>
+    ));
+  };
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
       <View>
@@ -281,10 +401,7 @@ const EventsData = () => {
               <Text style={{ color: "red" }}>Incorrect date</Text>
             )}
 
-            <TouchableOpacity
-              style={styles.continueButton}
-              onPress={handleExportData}
-            >
+            <TouchableOpacity onPress={handleExportData}>
               <Text style={styles.continueButtonText}>הוצא נתונים</Text>
             </TouchableOpacity>
           </View>
@@ -298,7 +415,7 @@ const EventsData = () => {
           ))}
 
           <View>
-            {showPositive && (
+            {showIcons && (
               <View>
                 <Entypo name="emoji-neutral" size={24} color="black" />
                 {Object.entries(positiveResult).map(([course, students]) => (
@@ -314,7 +431,7 @@ const EventsData = () => {
               </View>
             )}
 
-            {showNegative && (
+            {showIcons && (
               <View>
                 <Entypo name="emoji-sad" size={24} color="black" />
                 {Object.entries(negativeResult).map(([course, students]) => (
@@ -329,6 +446,23 @@ const EventsData = () => {
                 ))}
               </View>
             )}
+
+{show === true && (
+
+<View>
+  <Text style={styles.percentageData}>
+    בטווח התאריכים הנ"ל ישנם 
+
+  {positivePercentage}% של אירועים חיוביים
+  </Text>
+  <Text style={styles.percentageData}>
+  בטווח התאריכים הנ"ל ישנם 
+
+{negativePercentage}% של אירועים שליליים
+
+  </Text>
+</View>
+)}         
           </View>
         </View>
       </View>

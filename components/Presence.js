@@ -6,6 +6,7 @@ import {
   TextInput,
   FlatList,
   Alert,
+  ScrollView,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -85,6 +86,7 @@ const Presence = ({ route }) => {
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
+      Alert.alert("", "לא ניתן להכניס תאריך עתידי");
       return null;
     }
 
@@ -194,56 +196,56 @@ const Presence = ({ route }) => {
   };
 
   return (
-    <View>
-      <Toolbar />
-      <View style={styles.report}>
-        <Text style={{ fontSize: 20, padding: 10 }}> צור/י דיווח חדש</Text>
-        <Ionicons name="create-outline" size={24} color="black" />
-      </View>
-
+    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
       <View>
-        <Text>תאריך</Text>
-        <TextInput
-          style={[styles.input, { textAlign: "right" }]}
-          value={dateString}
-          onChangeText={handleChangeText}
-          placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-        />
-        {validDate ? (
-          <Text style={{ color: "green" }}>Correct date</Text>
-        ) : (
-          <Text style={{ color: "red" }}>Incorrect date</Text>
-        )}
-      </View>
+        <Toolbar />
+        <View style={styles.report}>
+          <Text style={{ fontSize: 20, padding: 10 }}> צור/י דיווח חדש</Text>
+          <Ionicons name="create-outline" size={24} color="black" />
+        </View>
 
-      <View style={[{ flexDirection: "row", justifyContent: "space-around" }]}>
-        <Text
-          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
-        >
-          איחור
-        </Text>
-        <Text
-          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
-        >
-          חיסור
-        </Text>
-        <Text
-          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
-        >
-          נוכח/ת
-        </Text>
-        <Text
-          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
-        >
-          שם התלמיד/ה
-        </Text>
-      </View>
+        <View>
+          <Text>תאריך</Text>
+          <TextInput
+            style={[styles.input, { textAlign: "right" }]}
+            value={dateString}
+            onChangeText={handleChangeText}
+            placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
+          />
+          {validDate ? (
+            <Text style={{ color: "green" }}>Correct date</Text>
+          ) : (
+            <Text style={{ color: "red" }}>Incorrect date</Text>
+          )}
+        </View>
 
-      <FlatList
-        data={students}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.nameContainer}>
+        <View
+          style={[{ flexDirection: "row", justifyContent: "space-around" }]}
+        >
+          <Text
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+          >
+            איחור
+          </Text>
+          <Text
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+          >
+            חיסור
+          </Text>
+          <Text
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+          >
+            נוכח/ת
+          </Text>
+          <Text
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+          >
+            שם התלמיד/ה
+          </Text>
+        </View>
+
+        {students.map((item) => (
+          <View style={styles.nameContainer} key={item.id}>
             <Text style={styles.name}>{item.student_name}</Text>
             <View style={styles.radioButtonContainer}>
               <RadioButton.Item
@@ -288,15 +290,15 @@ const Presence = ({ route }) => {
               />
             </View>
           </View>
-        )}
-      />
+        ))}
 
-      <TouchableOpacity style={[styles.butt]} onPress={createReport}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
-        </View>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity style={[styles.butt]} onPress={createReport}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
 

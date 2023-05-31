@@ -4,7 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  FlatList,
+  FlatList,ScrollView,
   Alert,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
@@ -198,6 +198,8 @@ const Appearances = ({ route }) => {
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
+
       return null;
     }
 
@@ -211,6 +213,7 @@ const Appearances = ({ route }) => {
   };
 
   return (
+    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
     <View>
       <Toolbar />
       <View style={styles.report}>
@@ -249,47 +252,40 @@ const Appearances = ({ route }) => {
         </Text>
       </View>
 
-      <FlatList
-        data={students}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => (
-          <View style={styles.nameContainer}>
-            <Text style={styles.name}>{item.student_name}</Text>
-            <View style={styles.radioButtonContainer}>
-              <TextInput
-                style={[styles.inputFreeText, { textAlign: "right" }]}
-                onChangeText={(text) => handleFreeTextChange(text, index)}
-                value={freeText[index]}
-              ></TextInput>
+      {students.map((item, index) => (
+  <View key={item.id} style={styles.nameContainer}>
+    <Text style={styles.name}>{item.student_name}</Text>
+    <View style={styles.radioButtonContainer}>
+      <TextInput
+        style={[styles.inputFreeText, { textAlign: "right" }]}
+        onChangeText={(text) => handleFreeTextChange(text, index)}
+        value={freeText[index]}
+      ></TextInput>
 
-              <RadioButton.Item
-                value="bed"
-                status={
-                  selectedValues[item.id] === "bed" ? "checked" : "unchecked"
-                }
-                onPress={() => {
-                  setSelectedValues({
-                    ...selectedValues,
-                    [item.id]: "bed",
-                  });
-                }}
-              />
-              <RadioButton.Item
-                value="good"
-                status={
-                  selectedValues[item.id] === "good" ? "checked" : "unchecked"
-                }
-                onPress={() => {
-                  setSelectedValues({
-                    ...selectedValues,
-                    [item.id]: "good",
-                  });
-                }}
-              />
-            </View>
-          </View>
-        )}
+      <RadioButton.Item
+        value="bed"
+        status={selectedValues[item.id] === "bed" ? "checked" : "unchecked"}
+        onPress={() => {
+          setSelectedValues({
+            ...selectedValues,
+            [item.id]: "bed",
+          });
+        }}
       />
+      <RadioButton.Item
+        value="good"
+        status={selectedValues[item.id] === "good" ? "checked" : "unchecked"}
+        onPress={() => {
+          setSelectedValues({
+            ...selectedValues,
+            [item.id]: "good",
+          });
+        }}
+      />
+    </View>
+  </View>
+))}
+
 
       <TouchableOpacity style={[styles.butt]} onPress={createReport}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -297,6 +293,7 @@ const Appearances = ({ route }) => {
         </View>
       </TouchableOpacity>
     </View>
+    </ScrollView>
   );
 };
 

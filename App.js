@@ -36,6 +36,8 @@ import EventsData from "./components/EventsData";
 import MyChoicesData from "./components/MyChoicesData";
 import ChooseStudentForHistory from "./components/ChooseStudentForHistory";
 import HistoryForStudent from "./components/HistoryForStudent";
+import Navbar from "./components/Navbar";
+import SetRules from "./components/SetRules";
 
 const Stack = createNativeStackNavigator();
 
@@ -81,6 +83,8 @@ function App({ route }) {
           component={ChooseStudentForHistory}
         />
         <Stack.Screen name="HistoryForStudent" component={HistoryForStudent} />
+        <Stack.Screen name="Navbar" component={Navbar} />
+        <Stack.Screen name="SetRules" component={SetRules} />
       </Stack.Navigator>
     </NavigationContainer>
   );

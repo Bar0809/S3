@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  Image,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { auth } from "./firebase";
 import { signOut } from "firebase/auth";
 
-const Toolbar = (props) => {
+const Toolbar = ({  }) => {
   const navigation = useNavigation();
   const [selectedCell, setSelectedCell] = useState(1);
-
+  const [showSidebar, setShowSidebar] = useState(false);
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -16,7 +24,13 @@ const Toolbar = (props) => {
       Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
+  const handleSidebarButtonPress = () => {
+    setShowSidebar(true);
+  };
 
+  const handleSidebarClose = () => {
+    setShowSidebar(false);
+  };
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -33,7 +47,7 @@ const Toolbar = (props) => {
   const handleCellPress = (cellIndex) => {
     setSelectedCell(cellIndex);
     if (cellIndex === 0) {
-      navigation.navigate("Profile"); //
+      navigation.navigate("SetRules"); //
       setSelectedCell(0);
     }
     if (cellIndex === 1) {
@@ -59,83 +73,46 @@ const Toolbar = (props) => {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.cell, selectedCell === 0 ? styles.selectedCell : null]}
-        onPress={() => handleCellPress(0)}
-      >
-        <Text style={styles.cellText}> מידע</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.cell, selectedCell === 1 ? styles.selectedCell : null]}
-        onPress={() => handleCellPress(1)}
-      >
-        <Text style={styles.cellText}>דיווח</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.cell, selectedCell === 2 ? styles.selectedCell : null]}
-        onPress={() => handleCellPress(2)}
-      >
-        <Text style={styles.cellText}>נתונים</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.cell, selectedCell === 3 ? styles.selectedCell : null]}
-        onPress={() => handleCellPress(3)}
-      >
-        <Text style={styles.cellText}>גלריה</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.cell, selectedCell === 4 ? styles.selectedCell : null]}
-        onPress={() => handleCellPress(4)}
-      >
-        <Text style={styles.cellText}>הכיתות שלי</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.cell, selectedCell === 5 ? styles.selectedCell : null]}
-        onPress={() => handleCellPress(5)}
-      >
-        <Text style={styles.cellText}>איזור אישי</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.text} onPress={handleLogout}>
-        <Text
-          style={[
-            styles.text,
-            { top: 28, fontSize: 18, textDecorationLine: "underline" },
-          ]}
-        >
-          התנתק
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
+      <View style={styles.toolbar}>
+        <View style={styles.toolbarContent}>
+          <Image
+            source={require("../assets/miniLogo-removebg-preview.png")}
+          />
+          <Text style={styles.toolbarTitle}>Home Page</Text>
+          <TouchableOpacity onPress={handleSidebarButtonPress}>
+            <Text>☰</Text>
+          </TouchableOpacity>
+        </View>
+        {/* Rest of the toolbar content */}
+      </View>
+  
+);
 };
 
+
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    backgroundColor: "#ccc",
-    padding: 10,
+  toolbar: {
+    position: 'absolute',
+    top: 20,
+    left: 0,
+    right: 0,
+    height: 50,
+    backgroundColor: '#f2f2f2',
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  cell: {
+  toolbarContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toolbarTitle: {
     flex: 1,
-    backgroundColor: "#fff",
-    // padding: 10,
-    borderRadius: 5,
-    margin: 5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  selectedCell: {
-    backgroundColor: "#add8e6",
-  },
-  cellText: {
-    fontSize: 16,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 10,
   },
 });
 

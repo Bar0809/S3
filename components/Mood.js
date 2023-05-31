@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  Alert,
+  Alert,ScrollView
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -190,6 +190,7 @@ const Mood = ({ route }) => {
     // Check if the day is valid for the given month and year
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
     if (day > lastDayOfMonth) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return null;
     }
 
@@ -210,6 +211,7 @@ const Mood = ({ route }) => {
   };
 
   return (
+    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
     <View>
       <Toolbar />
       <View style={styles.report}>
@@ -249,61 +251,53 @@ const Mood = ({ route }) => {
         </Text>
       </View>
 
-      <FlatList
-        data={students}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => (
-          <View style={styles.nameContainer}>
-            <Text style={styles.name}>{item.student_name}</Text>
-            <View style={styles.radioButtonContainer}>
-              <TextInput
-                style={[styles.inputFreeText, { textAlign: "right" }]}
-                onChangeText={(text) => handleFreeTextChange(text, index)}
-                value={freeText[index]}
-              ></TextInput>
-
-              <RadioButton.Item
-                value="bed"
-                status={
-                  selectedValues[item.id] === "bed" ? "checked" : "unchecked"
-                }
-                onPress={() => {
-                  setSelectedValues({
-                    ...selectedValues,
-                    [item.id]: "bed",
-                  });
-                }}
-              />
-
-              <RadioButton.Item
-                value="medium"
-                status={
-                  selectedValues[item.id] === "medium" ? "checked" : "unchecked"
-                }
-                onPress={() => {
-                  setSelectedValues({
-                    ...selectedValues,
-                    [item.id]: "medium",
-                  });
-                }}
-              />
-
-              <RadioButton.Item
-                value="good"
-                status={
-                  selectedValues[item.id] === "good" ? "checked" : "unchecked"
-                }
-                onPress={() => {
-                  setSelectedValues({
-                    ...selectedValues,
-                    [item.id]: "good",
-                  });
-                }}
-              />
-            </View>
-          </View>
-        )}
+      {students.map((item, index) => (
+  <View style={styles.nameContainer} key={item.id}>
+    <Text style={styles.name}>{item.student_name}</Text>
+    <View style={styles.radioButtonContainer}>
+      <TextInput
+        style={[styles.inputFreeText, { textAlign: "right" }]}
+        onChangeText={(text) => handleFreeTextChange(text, index)}
+        value={freeText[index]}
       />
+
+      <RadioButton.Item
+        value="bed"
+        status={selectedValues[item.id] === "bed" ? "checked" : "unchecked"}
+        onPress={() => {
+          setSelectedValues({
+            ...selectedValues,
+            [item.id]: "bed",
+          });
+        }}
+      />
+
+      <RadioButton.Item
+        value="medium"
+        status={selectedValues[item.id] === "medium" ? "checked" : "unchecked"}
+        onPress={() => {
+          setSelectedValues({
+            ...selectedValues,
+            [item.id]: "medium",
+          });
+        }}
+      />
+
+      <RadioButton.Item
+        value="good"
+        status={selectedValues[item.id] === "good" ? "checked" : "unchecked"}
+        onPress={() => {
+          setSelectedValues({
+            ...selectedValues,
+            [item.id]: "good",
+          });
+        }}
+      />
+    </View>
+  </View>
+))}
+
+
 
       <TouchableOpacity style={[styles.butt]} onPress={createReport}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -311,6 +305,7 @@ const Mood = ({ route }) => {
         </View>
       </TouchableOpacity>
     </View>
+    </ScrollView>
   );
 };
 

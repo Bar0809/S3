@@ -11,15 +11,8 @@ import {
 import React, { useState, useEffect } from "react";
 import Toolbar from "./Toolbar";
 import { auth, db } from "./firebase";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  deleteDoc,
-  doc,
-  setDoc,
-} from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, setDoc, updateDoc, increment } from "firebase/firestore";
+
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 
@@ -38,7 +31,8 @@ const ClassDetails = ({ route }) => {
     const getCourses = async () => {
       const q = query(
         collection(db, "Courses"),
-        where("class_id", "==", class_id)
+        where("class_id", "==", class_id),
+        where("t_id", "==", auth.currentUser.uid)  
       );
       const querySnapshot = await getDocs(q);
       const names = querySnapshot.docs.map((doc) => doc.data().course_name);
@@ -84,6 +78,12 @@ const ClassDetails = ({ route }) => {
             const querySnapshot = await getDocs(q);
             const studentDocs = querySnapshot.docs.map((doc) => doc.ref);
             await Promise.all(studentDocs.map(deleteDoc));
+  
+            const classRef = doc(collection(db, "Classes"), class_id);
+            await updateDoc(classRef, {
+              numOfStudents: increment(-1)
+            });
+  
             const updatedStudents = students.filter((s) => s.id !== student.id);
             setStudents(updatedStudents);
           },
@@ -92,6 +92,7 @@ const ClassDetails = ({ route }) => {
       { cancelable: false }
     );
   };
+  
 
   const handleRemoveCourse = async (item) => {
     try {
@@ -123,7 +124,7 @@ const ClassDetails = ({ route }) => {
         { cancelable: false }
       );
     } catch (error) {
-      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
 
@@ -151,7 +152,7 @@ const ClassDetails = ({ route }) => {
         handlePressCourses();
       }
     } catch (error) {
-      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
 
@@ -170,7 +171,7 @@ const ClassDetails = ({ route }) => {
         handlePressStudents();
       }
     } catch (error) {
-      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
 

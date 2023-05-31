@@ -144,6 +144,7 @@ const SpicelEvent = ({ route }) => {
         const currentDate = new Date();
         const minDate = new Date('2023-01-01');
         if (date < minDate || date > currentDate) {
+            Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
             return null;
         }
 

@@ -120,7 +120,7 @@ const SelectCategory = ({ route }) => {
         <View style={styles.radioButtonContainer}>
           <RadioButton.Item
             label="מצב חברתי"
-            value="FrindStatus"
+            value="FriendStatus"
             style={styles.radioButtonItem}
           />
         </View>

@@ -7,12 +7,13 @@ import {
   TextInput,
   ScrollView,
   SectionList,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import Toolbar from "./Toolbar";
-import { collection, query, where, getDocs, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { collection, query, where, getDocs, getDoc, doc } from "firebase/firestore";
+import { db, auth } from "./firebase";
 import { Entypo } from "@expo/vector-icons";
 
 const DietNAppearData = ({ route }) => {
@@ -20,6 +21,7 @@ const DietNAppearData = ({ route }) => {
 
   const [startDateString, setStartDateString] = useState("");
   const [endDateString, setEndDateString] = useState("");
+  
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [validDate, setValidDate] = useState(false);
@@ -29,6 +31,10 @@ const DietNAppearData = ({ route }) => {
   const [finalResult, setFinalResult] = useState([]);
   const [ids, setIds] = useState([]);
   const [show, setShow] = useState(false);
+  const [clickedDate, setClickedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [percentage, setPercentage] = useState(0);
+  const [numOfStudents, setNumOfStudents]= useState(0);
 
   function parseDateString(inputString) {
     const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
@@ -68,6 +74,7 @@ const DietNAppearData = ({ route }) => {
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
     if (date < minDate || date > currentDate) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return false;
     }
 
@@ -76,15 +83,41 @@ const DietNAppearData = ({ route }) => {
 
   const handleChangeStartDate = (text) => {
     setStartDateString(text);
-    setStartDate(parseDateString(text, "dd/mm/yyyy"));
+    const startDateArray = text.split("/");
+    const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
+    const startDateTime = new Date(startDateISO);
+    setStartDate(startDateTime);
     setValidDate(parseDateString(text));
   };
-
+  
   const handleChangeEndDate = (text) => {
     setEndDateString(text);
-    setEndDate(parseDateString(text, "dd/mm/yyyy"));
+    const endDateArray = text.split("/");
+    const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
+    const endDateTime = new Date(endDateISO);
+    setEndDate(endDateTime);
     setValidDateTwo(parseDateString(text));
   };
+  
+  
+
+
+  function countDays(startDate, endDate) {
+    if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
+      throw new Error("startDate and endDate must be Date objects");
+    }
+    const oneDay = 24 * 60 * 60 * 1000; 
+
+    startDate.setHours(0, 0, 0, 0);
+  
+    endDate.setHours(23, 59, 59, 999);
+  
+    const diffDays = Math.round((endDate - startDate) / oneDay) ;
+  
+    return diffDays;
+  }
+  
+  
 
   const handleExportData = async () => {
     const startDateArray = startDateString.split("/");
@@ -93,6 +126,11 @@ const DietNAppearData = ({ route }) => {
     const endDateArray = endDateString.split("/");
     const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
     const endDateTime = new Date(endDateISO);
+
+    if (isNaN(startDateTime) || isNaN(endDateTime)) {
+      Alert.alert("Invalid date format");
+      return;
+    }
     let querySnapshot;
 
     if (startDate && endDate) {
@@ -101,72 +139,114 @@ const DietNAppearData = ({ route }) => {
         const q = query(
           categoryRef,
           where("date", ">=", startDateTime),
-          where("date", "<=", endDateTime)
+          where("date", "<=", endDateTime),
+          where("t_id", "==", auth.currentUser.uid)
         );
+
         querySnapshot = await getDocs(q);
-      } catch (error) {
-        Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
-      }
-      const tempIds = [];
+        const Idst = [];
 
-      if (category === "Diet") {
-        querySnapshot.forEach((doc) => {
-          if (doc.data().diet === "bed") {
-            tempIds.push(doc.id);
-          }
-          setIds(tempIds);
-
-          const categoryDates = [];
-          querySnapshot.forEach(async (doc) => {
+        if (category === "Diet") {
+          querySnapshot.forEach((doc) => {
             if (doc.data().diet === "bed") {
-              const docRef = doc.ref;
-              const docSnapshot = await getDoc(docRef);
-              const moodsValue = docSnapshot.data().date.toDate();
-              const day = moodsValue.getDate().toString().padStart(2, "0");
-              const month = (moodsValue.getMonth() + 1)
-                .toString()
-                .padStart(2, "0");
-              const year = moodsValue.getFullYear();
-              const formattedDate = `${day}/${month}/${year}`;
-              if (!categoryDates.includes(formattedDate)) {
-                categoryDates.push(formattedDate);
-              }
+              Idst.push(doc.id);
             }
-            setDates(categoryDates);
           });
-        });
-      } else if (category === "Appearances") {
-        querySnapshot.forEach((doc) => {
-          if (doc.data().appearances === "bed") {
-            tempIds.push(doc.id);
-          }
-          setIds(tempIds);
 
-          const tempIds = [];
-          querySnapshot.forEach(async (doc) => {
-            if (doc.data().appearances === "bed") {
-              const docRef = doc.ref;
-              const docSnapshot = await getDoc(docRef);
-              const moodsValue = docSnapshot.data().date.toDate();
-              const day = moodsValue.getDate().toString().padStart(2, "0");
-              const month = (moodsValue.getMonth() + 1)
-                .toString()
-                .padStart(2, "0");
-              const year = moodsValue.getFullYear();
-              const formattedDate = `${day}/${month}/${year}`;
-              if (!categoryDates.includes(formattedDate)) {
-                categoryDates.push(formattedDate);
+          setIds(Idst);
+
+          const tempDates = [];
+          await Promise.all(
+            querySnapshot.docs.map(async (doc) => {
+              if (doc.data().diet === "bed") {
+                const docRef = doc.ref;
+                const docSnapshot = await getDoc(docRef);
+                const moodsValue = docSnapshot.data().date.toDate();
+                const day = moodsValue.getDate().toString().padStart(2, "0");
+                const month = (moodsValue.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0");
+                const year = moodsValue.getFullYear();
+                const formattedDate = `${day}/${month}/${year}`;
+                if (!tempDates.includes(formattedDate)) {
+                  tempDates.push(formattedDate);
+                }
               }
+            })
+          );
+
+          setDates(tempDates);
+
+          const classId = querySnapshot.docs[0].data().class_id;
+          const classDoc = await getDoc(doc(db, "Classes", classId));
+          const num = classDoc.data().numOfStudents || 1;
+          setNumOfStudents(num);
+          const days= countDays(startDate, endDate);
+          const temp = (Idst.length*100)/ (numOfStudents*days);
+          setPercentage(temp.toFixed(2));
+          setShow(true);
+
+
+        } 
+        
+        else if (category === "Appearances") {
+          querySnapshot.forEach((doc) => {
+            if (doc.data().appearances === "bed") {
+              Idst.push(doc.id);
             }
-            setDates(categoryDates);
           });
-        });
+          setIds(Idst);
+
+          const tempDates = [];
+          await Promise.all(
+            querySnapshot.docs.map(async (doc) => {
+              if (doc.data().appearances === "bed") {
+                const docRef = doc.ref;
+                const docSnapshot = await getDoc(docRef);
+                const moodsValue = docSnapshot.data().date.toDate();
+                const day = moodsValue.getDate().toString().padStart(2, "0");
+                const month = (moodsValue.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0");
+                const year = moodsValue.getFullYear();
+                const formattedDate = `${day}/${month}/${year}`;
+                if (!tempDates.includes(formattedDate)) {
+                  tempDates.push(formattedDate);
+                }
+              }
+            })
+          );
+          setDates(tempDates);
+
+       
+          const classId = querySnapshot.docs[0].data().class_id;
+          const classDoc = await getDoc(doc(db, "Classes", classId));
+          const num = classDoc.data().numOfStudents || 1;
+          setNumOfStudents(num);
+          setPercentage(0);
+          const days= countDays(startDate, endDate);
+          const temp = (Idst.length*100)/ (numOfStudents*days);
+          setPercentage(temp.toFixed(2));
+          setShow(true);
+        }
+      } 
+      
+      
+      catch (error) {
+        Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+        console.error("Error exporting data:", error);
       }
     }
   };
 
   const check = async (clickedDate) => {
-    setShow(false);
+    if (clickedDate === selectedDate) {
+      setSelectedDate(null);
+    } else {
+      setSelectedDate(clickedDate);
+    }
+
+    setClickedDate(clickedDate);
 
     const dateParts = clickedDate.split("/");
     const dateObject = new Date(
@@ -206,9 +286,8 @@ const DietNAppearData = ({ route }) => {
       }, {});
 
       setFinalResult(result);
-      setShow(true);
     } catch (error) {
-      Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
+      Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
 
@@ -246,39 +325,58 @@ const DietNAppearData = ({ route }) => {
             )}
 
             <TouchableOpacity
-              style={styles.continueButton}
               onPress={handleExportData}
             >
               <Text style={styles.continueButtonText}>הוצא נתונים</Text>
             </TouchableOpacity>
           </View>
-
           {dates.map((item) => (
             <TouchableOpacity onPress={() => check(item)} key={item}>
               <View style={styles.dateItem}>
                 <Text style={styles.dateText}>{item}</Text>
               </View>
+              {selectedDate === item && (
+                <View>
+                  {Object.entries(finalResult).length > 0 && (
+                    <View>
+                      <Text></Text>
+                      <Entypo name="emoji-sad" size={24} color="black" />
+                      {Object.entries(finalResult).map(
+                        ([courseName, students]) => (
+                          <View key={courseName}>
+                            <Text style={{ fontWeight: "bold" }}>
+                              {courseName}
+                            </Text>
+                            {students.map((student, index) => (
+                              <Text key={`${student}-${index}`}>
+                                {student.student}{" "}
+                                {student.note ? `(${student.note})` : ""}
+                              </Text>
+                            ))}
+                          </View>
+                        )
+                      )}
+                    </View>
+                  )}
+                </View>
+              )}
             </TouchableOpacity>
+
           ))}
 
+{show === true && (
+
           <View>
-            {finalResult && Object.keys(finalResult).length > 0 && (
-              <View>
-                <Entypo name="emoji-sad" size={24} color="black" />
-                {Object.entries(finalResult).map(([course, students]) => (
-                  <View key={course}>
-                    <Text style={{ fontWeight: "bold" }}>{course}</Text>
-                    {students.map(({ student, note }) => (
-                      <Text key={`${student}-${note}`}>
-                        {student} {note ? `(${note})` : ""}
-                      </Text>
-                    ))}
-                  </View>
-                ))}
-              </View>
-            )}
+            <Text style={styles.percentageData}>
+              בטווח התאריכים הנ"ל ישנם 
+
+            {percentage}% של דיווחים בעלי אייקון עצוב.
+        
+            </Text>
           </View>
+  )}        
         </View>
+
       </View>
     </ScrollView>
   );
@@ -338,4 +436,9 @@ const styles = StyleSheet.create({
     margin: 12,
     borderRadius: 10,
   },
+  percentageData: {
+    fontSize:18,
+    fontWeight:'bold',
+
+  }
 });

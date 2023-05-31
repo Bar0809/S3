@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "./firebase";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, updateDoc, doc} from "firebase/firestore";
 import XLSX from "xlsx";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
@@ -32,6 +32,8 @@ const SetDetails = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isBlueBackground, setIsBlueBackground] = useState(false);
   const [uploadText, setUploadText] = useState("");
+  const [counter, setCounter] = useState(0);
+
 
   const handleNumInputsChange = (value) => {
     if (value > 0) {
@@ -170,19 +172,25 @@ const SetDetails = () => {
           };
 
           const promise = addDoc(studentsCollectionRef, studentDoc)
-            .then((docRef) => {
-              // console.log("Student document successfully written!------>" + studentDoc.student_name);
-            })
-            .catch((error) => {
-              Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
-            });
-          studentPromises.push(promise);
+          .then((docRef) => {
+            setCounter((prevCounter) => prevCounter + 1);
+            // console.log("Student document successfully written!------>" + studentDoc.student_name);
+          })
+          .catch((error) => {
+            Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+          });
+        studentPromises.push(promise);
         }
 
         rowIndex++;
       }
 
       await Promise.all(studentPromises);
+      const classDocUpdate = {
+        numOfStudents: studentPromises.length,
+      };
+      await updateDoc(doc(classesCollectionRef, classId), classDocUpdate);
+
 
       Alert.alert("Success", "Data added successfully!", [
         {
@@ -191,8 +199,11 @@ const SetDetails = () => {
           style: "cancel",
         },
       ]);
-    } catch (error) {
-      Alert.alert("Error", "An error occurred while uploading the file.", [
+    } 
+    
+    catch (error) {
+      console.log("File upload error:", error);
+      Alert.alert("Error", "An error occurred while uploading the file: " + error.message, [
         {
           text: "OK",
           onPress: () => {},
@@ -200,6 +211,60 @@ const SetDetails = () => {
         },
       ]);
     }
+
+    
+    const collectionRef = collection(db, "TrafficLights");
+    const lightsDoc = {
+       t_id: auth.currentUser.uid,
+        G_presence_late: 5,
+        G_presence_absent: 10,
+        G_presence: 85,
+        O_presence_late: 10,
+        O_presence_absent: 15,
+        O_presence: 75,
+        G_appearances_p: 90,
+        G_appearances_n: 10,
+        O_appearances_p: 80,
+        O_appearances_n: 20,
+        G_diet_p: 90,
+        G_diet_n: 10,
+        O_diet_p: 80,
+        O_diet_n: 20,
+        G_events: 0,
+        O_events: 1,
+        G_friendStatus_n: 5,
+        G_friendStatus_m: 10,
+        G_friendStatus_p: 85,
+        O_friendStatus_n: 10,
+        O_friendStatus_m: 15,
+        O_friendStatus_p: 75,
+        G_mood_n: 5,
+        G_mood_m: 10,
+        G_mood_p: 85,
+        O_mood_n: 10,
+        O_mood_m: 15,
+        O_mood_p: 75,
+    };
+
+    const promise = addDoc(collectionRef, lightsDoc)
+
+    const collectionRef_ = collection(db, "Colors");
+    const colorsDoc = {
+       t_id: auth.currentUser.uid,
+       class_id: classId,
+       class_color: 'green',
+       class_description: ''
+    };
+
+    const p = addDoc(collectionRef_, colorsDoc)
+
+
+    .then(() => {
+      Alert.alert('Success', 'Data has been successfully updated');
+    })
+          .catch((error) => {
+            Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+          });
   };
 
   const pickDocument = async () => {
