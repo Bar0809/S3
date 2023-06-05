@@ -4,17 +4,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  FlatList,
-  Alert,ScrollView
+  Alert,  ScrollView, Image, Dimensions
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
-import Toolbar from "./Toolbar";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db, auth } from "./firebase";
 import { RadioButton } from "react-native-paper";
 import { Entypo } from "@expo/vector-icons";
+import { AntDesign } from '@expo/vector-icons';
+import Navbar from "./Navbar";
+
+
+const { width } = Dimensions.get('window');
 
 const Mood = ({ route }) => {
   const navigation = useNavigation();
@@ -69,14 +71,12 @@ const Mood = ({ route }) => {
       return;
     }
 
-    // Set empty strings for undefined freeText values
     for (let i = 0; i < students.length; i++) {
       if (freeText[i] === undefined) {
         freeText[i] = "";
       }
     }
 
-    // Check if a document with the same date and course_id exists
     const q = query(
       collection(db, "Mood"),
       where("date", "==", dateString),
@@ -89,16 +89,17 @@ const Mood = ({ route }) => {
 
     if (querySnapshot.size > 0) {
       Alert.alert(
-        "Add report",
-        "Note that there is an attendance report for this course on the above date. Do you want to continue?",
+        "הוספת דיווח ",
+        "שימו לב, יש דיווח מצב רוח בתאריך זה למקצוע זה. האם ברצונכם להמשיך?",
+    
         [
           {
-            text: "No",
+            text: "לא",
             onPress: () => navigation.navigate("HomePage"),
             style: "cancel",
           },
           {
-            text: "Yes",
+            text: "כן",
             onPress: async () => {
               const moodData = students.map((student, i) => {
                 return {
@@ -120,7 +121,7 @@ const Mood = ({ route }) => {
                   moodData.map((data) => addDoc(collection(db, "Mood"), data))
                 );
 
-                Alert.alert("", 'דו"ח המצב הנפשי הוגש בהצלחה!');
+                Alert.alert("", 'דו"ח מצב הרוח הוגש בהצלחה!');
                 navigation.navigate("HomePage");
               } catch (e) {
                 Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
@@ -151,7 +152,7 @@ const Mood = ({ route }) => {
           moodData.map((data) => addDoc(collection(db, "Mood"), data))
         );
 
-        Alert.alert("", 'דו"ח המצב הנפשי הוגש בהצלחה!');
+        Alert.alert("", 'דו"ח מצב הרוח הוגש בהצלחה!');
 
         navigation.navigate("HomePage");
       } catch (e) {
@@ -169,10 +170,9 @@ const Mood = ({ route }) => {
     }
 
     const day = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
+    const month = parseInt(match[2], 10) - 1; 
     const year = parseInt(match[3], 10);
 
-    // Check if the date is valid
     const date = new Date(year, month, day);
     if (
       date.getFullYear() !== year ||
@@ -182,22 +182,19 @@ const Mood = ({ route }) => {
       return null;
     }
 
-    // Check if the month is valid
     if (month > 11) {
       return null;
     }
 
-    // Check if the day is valid for the given month and year
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
     if (day > lastDayOfMonth) {
-      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return null;
     }
 
-    // Check if the date is within the desired range
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
-    if (date < minDate || date > currentDate) {
+    if (date < minDate || date >= currentDate) {
+      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return null;
     }
 
@@ -211,149 +208,133 @@ const Mood = ({ route }) => {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+    <View style={styles.container}>
     <View>
-      <Toolbar />
-      <View style={styles.report}>
-        <Text style={{ fontSize: 20, padding: 10 }}> צור/י דיווח חדש</Text>
-        <Ionicons name="create-outline" size={24} color="black" />
-      </View>
-
-      <View>
-        <Text>תאריך</Text>
-        <TextInput
-          style={[styles.input, { textAlign: "right" }]}
-          value={dateString}
-          onChangeText={handleChangeText}
-          placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-        />
-        {validDate ? (
-          <Text style={{ color: "green" }}>Correct date</Text>
-        ) : (
-          <Text style={{ color: "red" }}>Incorrect date</Text>
-        )}
-      </View>
-
-      <View style={[{ flexDirection: "row", justifyContent: "space-around" }]}>
-        <Text
-          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
-        >
-          הערות -לא חובה
-        </Text>
-
-        <Entypo name="emoji-sad" size={24} color="black" />
-        <Entypo name="emoji-neutral" size={24} color="black" />
-        <Entypo name="emoji-happy" size={24} color="black" />
-        <Text
-          style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
-        >
-          שם התלמיד/ה
-        </Text>
-      </View>
-
-      {students.map((item, index) => (
-  <View style={styles.nameContainer} key={item.id}>
-    <Text style={styles.name}>{item.student_name}</Text>
-    <View style={styles.radioButtonContainer}>
-      <TextInput
-        style={[styles.inputFreeText, { textAlign: "right" }]}
-        onChangeText={(text) => handleFreeTextChange(text, index)}
-        value={freeText[index]}
-      />
-
-      <RadioButton.Item
-        value="bed"
-        status={selectedValues[item.id] === "bed" ? "checked" : "unchecked"}
-        onPress={() => {
-          setSelectedValues({
-            ...selectedValues,
-            [item.id]: "bed",
-          });
-        }}
-      />
-
-      <RadioButton.Item
-        value="medium"
-        status={selectedValues[item.id] === "medium" ? "checked" : "unchecked"}
-        onPress={() => {
-          setSelectedValues({
-            ...selectedValues,
-            [item.id]: "medium",
-          });
-        }}
-      />
-
-      <RadioButton.Item
-        value="good"
-        status={selectedValues[item.id] === "good" ? "checked" : "unchecked"}
-        onPress={() => {
-          setSelectedValues({
-            ...selectedValues,
-            [item.id]: "good",
-          });
-        }}
-      />
+      <Image source={require("../assets/miniLogo-removebg-preview.png")} />
     </View>
+
+    <View style={styles.title}>
+      <Text style={styles.pageTitle}>דיווח מצב רוח - {className}</Text>
+    </View>
+
+    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+      <View style={styles.container}>
+        <View style={styles.row}>
+          <Text style={styles.subTitle}>תאריך</Text>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            value={dateString}
+            onChangeText={handleChangeText}
+            placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+          />
+          {dateString && !validDate && (
+            <Text style={{ color: "red" }}>ערך לא תקין</Text>
+          )}
+        </View>
+        {validDate && <AntDesign name="check" size={24} color="green" />}
+      </View>
+
+      <Text>{"\n"}</Text>
+      <View style={styles.tableContainer}>
+  <View style={styles.tableHeader}>
+    <Text style={styles.tableHeaderText}>הערות -לא חובה</Text>
+    <Entypo name="emoji-sad" size={24} color="black" />
+    <Entypo name="emoji-neutral" size={24} color="black" />
+    <Entypo name="emoji-happy" size={24} color="black" />
+    <Text style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}>
+      שם התלמיד/ה
+    </Text>
   </View>
-))}
 
+  {students.map((item, index) => (
+    <View style={styles.studentRow} key={item.id}>
+      <View style={styles.radioButtonContainer}>
+        <TextInput
+          style={[styles.inputFreeText, { textAlign: "right" }]}
+          onChangeText={(text) => handleFreeTextChange(text, index)}
+          value={freeText[index]}
+        />
+        <View style={{ flexDirection: "row" }}>
+          <RadioButton.Item
+            value="sad"
+            status={
+              selectedValues[item.id] === "sad" ? "checked" : "unchecked"
+            }
+            onPress={() => {
+              setSelectedValues({
+                ...selectedValues,
+                [item.id]: "sad",
+              });
+            }}
+            style={{ marginRight: -20 }} 
+          />
 
+          <RadioButton.Item
+            value="medium"
+            status={
+              selectedValues[item.id] === "medium" ? "checked" : "unchecked"
+            }
+            onPress={() => {
+              setSelectedValues({
+                ...selectedValues,
+                [item.id]: "medium",
+              });
+            }}
+            style={{ marginRight: -20 }} 
 
-      <TouchableOpacity style={[styles.butt]} onPress={createReport}>
+          />
+          <RadioButton.Item
+            value="good"
+            status={
+              selectedValues[item.id] === "good" ? "checked" : "unchecked"
+            }
+            onPress={() => {
+              setSelectedValues({
+                ...selectedValues,
+                [item.id]: "good",
+              });
+            }}
+            style={{ marginRight: -20 }} 
+          />
+        </View>
+      </View>
+      <Text style={styles.name}>{item.student_name}</Text>
+    </View>
+  ))}
+</View>
+
+    
+      <TouchableOpacity style={styles.button} onPress={createReport}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
+        <Text style={styles.buttonText}> שלח/י דיווח</Text>
         </View>
       </TouchableOpacity>
+
+      <Text>{"\n\n\n\n\n\n"}</Text>
+
+
+          </ScrollView>
+          <Navbar/>
+
     </View>
-    </ScrollView>
   );
 };
 
 export default Mood;
 
 const styles = StyleSheet.create({
-  back: {
-    padding: "30%",
-  },
-  report: {
-    flexDirection: "row",
-    alignItems: "center",
-    textAlign: "right",
-    justifyContent: "flex-end",
-  },
-
-  container: {
-    padding: 16,
-  },
-  nameContainer: {
-    flexDirection: "row-reverse",
-    justifyContent: "flex-end",
-    marginBottom: 16,
-    justifyContent: "space-around",
-  },
   name: {
     fontWeight: "bold",
     marginRight: 8,
   },
-  optionsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 8,
-  },
+ 
   radioButtonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
     marginRight: 16,
   },
-  radioButtonItem: {
-    height: 24,
-    width: 24,
-  },
+ 
   input: {
     height: 40,
     borderColor: "grey",
@@ -362,22 +343,124 @@ const styles = StyleSheet.create({
     width: 300,
     backgroundColor: "white",
   },
-  butt: {
-    backgroundColor: "#90EE90",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-    width: 100,
-  },
-  back: {
-    padding: "30%",
-  },
   inputFreeText: {
     height: 40,
     borderColor: "grey",
     borderWidth: 1,
     padding: 10,
-    width: 100,
+    width: 120,
     backgroundColor: "white",
   },
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 40,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 24,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
+  },
+  tableContainer: {
+    width: '90%',
+    marginBottom: 16,
+    marginLeft: '5%',
+    marginRight: '5%',},
+tableHeader: {
+  flexDirection: "row",
+  justifyContent: "space-around",
+  alignItems: "center",
+  marginBottom: 8,
+},
+studentRow: {
+  flexDirection: "row"
+  , alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+},
+studentName: {
+  flex: 1,
+  fontWeight: "bold",
+  textAlign: "right",
+},
+gradeInput: {
+  width: 80,
+},
+freeTextInput: {
+  flex: 1,
+  marginLeft: 16,
+},
+studentRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+},
+studentName: {
+  flex: 1,
+  fontWeight: "bold",
+  textAlign: "right",
+},
+gradeInput: {
+  width: 80,
+},
+freeTextInput: {
+  flex: 1,
+  marginLeft: 16,
+},
+tableHeaderText:{
+  textAlign: "right",
+   fontWeight: "bold",
+    fontSize: 16,
+    textDecorationLine: 'underline'
+},
+
 });

@@ -1,15 +1,16 @@
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
+  StyleSheet, Image,ScrollView,
+  TouchableOpacity,Dimensions
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import Toolbar from "./Toolbar";
 import { FontAwesome } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import Navbar from "./Navbar";
+
 import { auth, db } from "./firebase";
 import {
   collection,
@@ -19,7 +20,10 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 
-const ChooseClass = (props) => {
+const { width } = Dimensions.get('window');
+
+const ChooseClass = ({ route }) => {
+  const { reported } = route.params;
   const navigation = useNavigation();
   const [data, setData] = useState([]);
   const [ids, setIds] = useState([]);
@@ -43,8 +47,18 @@ const ChooseClass = (props) => {
         classIds.push(classId);
       }
     });
-    setData(classNames);
-    setIds(classIds);
+    
+    
+    let classIdPairs = classNames.map((className, index) => {
+      return { className, id: classIds[index] };
+    });
+    
+    classIdPairs.sort((a, b) => a.className.localeCompare(b.className));
+    
+    classes = classIdPairs.map(pair => pair.className);
+    let IDS = classIdPairs.map(pair => pair.id);
+    setData(classes);
+    setIds(IDS);
   };
 
   useEffect(() => {
@@ -56,9 +70,9 @@ const ChooseClass = (props) => {
       <TouchableOpacity
         onPress={() =>
           navigation.navigate("ChooseCourse", {
-            reported: props.route.params.param1,
+            reported: reported,
             className: item,
-            classId: ids[index],
+            classId: ids[data.indexOf(item)],
           })
         }
       >
@@ -68,8 +82,6 @@ const ChooseClass = (props) => {
             fontSize: 22,
             textAlign: "center",
             textDecorationLine: "underline",
-            flexDirection: "column",
-            justifyContent: "center",
           }}
         >
           {item}
@@ -77,66 +89,97 @@ const ChooseClass = (props) => {
       </TouchableOpacity>
     </View>
   );
-
+  
+  
+  
   return (
-    <View tyle={styles.allPage}>
-      <Toolbar />
-
-      <View style={styles.title}>
-        <FontAwesome
-          name="users"
-          size={40}
-          color="black"
-          style={[{ paddingLeft: -50 }]}
-        />
-        <Text style={styles.pageTitle}>הכיתות שלי:</Text>
-      </View>
-
-      <Text style={styles.subTitle}> בחר/י את הכיתה הרצויה</Text>
-
+    <View style={styles.container}>
       <View>
-        <FlatList
-          data={data}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => item + index}
-          contentContainerStyle={{ alignItems: "center", position: "relative" }}
-        />
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+      </View>
+  
+      <View style={styles.title}>
+        <Text style={styles.pageTitle}>רשימת הכיתות: </Text>
       </View>
 
+      <ScrollView style={styles.scrollContainer}>
+        <Text style={styles.subTitle}> בחר/י את הכיתה הרצויה</Text>
+  
+        <View>
+  {data.map((item, index) => (
+    <View key={item + index} style={styles.itemContainer}>
       <TouchableOpacity
-        style={styles.back}
-        onPress={() => navigation.navigate("HomePage")}
+        onPress={() =>
+          navigation.navigate("ChooseCourse", {
+            reported: reported,
+            className: item,
+            classId: ids[data.indexOf(item)],
+          })
+        }
       >
-        <MaterialIcons name="navigate-next" size={24} color="black" />
-        <Text>הקודם</Text>
+        <Text style={styles.itemText}>{item}</Text>
       </TouchableOpacity>
     </View>
+  ))}
+</View>
+
+      </ScrollView>
+  
+      <Navbar />
+    </View>
   );
-};
+  };
 
 export default ChooseClass;
 
 const styles = StyleSheet.create({
-  allPage: {
+  container: {
     flex: 1,
+    backgroundColor: "#F2E3DB",
     alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse", 
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
   },
   title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     alignItems: "center",
   },
   pageTitle: {
-    color: "black",
-    fontSize: 50,
+    color: "#AD8E70",
+    fontSize: 48,
     fontWeight: "bold",
-  },
-  back: {
-    padding: "40%",
-    alignItems: "center",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
   },
   subTitle: {
-    color: "red",
-    fontWeight: "bold",
-    fontSize: 18,
+    fontSize: 24,
     textAlign: "right",
+    fontWeight: "bold",
   },
 });

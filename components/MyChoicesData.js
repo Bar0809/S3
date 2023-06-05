@@ -6,15 +6,29 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  Image,
+  Dimensions,
 } from "react-native";
-import React, { useState } from "react";
-import Toolbar from "./Toolbar";
-import { collection, query, where, getDocs, getDoc , doc} from "firebase/firestore";
+import React, { useState, useEffect } from "react";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  getDoc,
+  doc,
+} from "firebase/firestore";
 import { db, auth } from "./firebase";
+import { AntDesign } from "@expo/vector-icons";
+import Navbar from "./Navbar";
 import { Entypo } from "@expo/vector-icons";
 
+
+const { width } = Dimensions.get("window");
+
 const MyChoicesData = ({ route }) => {
-  const { category } = route.params;
+  const { className, classId, category } = route.params;
+
   const [startDateString, setStartDateString] = useState("");
   const [endDateString, setEndDateString] = useState("");
   const [startDate, setStartDate] = useState(null);
@@ -30,9 +44,9 @@ const MyChoicesData = ({ route }) => {
   const [show, setShow] = useState(false);
   const [icon, setIcon] = useState(false);
   const [percentage, setPercentage] = useState(0);
-  const [numOfStudents, setNumOfStudents]= useState(0);
+  const [numOfStudents, setNumOfStudents] = useState(0);
   const [classDoc, setClassDoc] = useState();
-
+  const [categoryName, setCategoryName] = useState("");
 
   function parseDateString(inputString) {
     const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
@@ -67,8 +81,8 @@ const MyChoicesData = ({ route }) => {
 
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
-    if (date < minDate || date > currentDate) {
-      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
+    if (date < minDate || date >= currentDate) {
+      Alert.alert("", "לא ניתן להכניס תאריך עתידי");
       return false;
     }
 
@@ -83,7 +97,7 @@ const MyChoicesData = ({ route }) => {
     setStartDate(startDateTime);
     setValidDate(parseDateString(text));
   };
-  
+
   const handleChangeEndDate = (text) => {
     setEndDateString(text);
     const endDateArray = text.split("/");
@@ -92,24 +106,24 @@ const MyChoicesData = ({ route }) => {
     setEndDate(endDateTime);
     setValidDateTwo(parseDateString(text));
   };
-  
+
   function countDays(startDate, endDate) {
     if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
       throw new Error("startDate and endDate must be Date objects");
     }
-    const oneDay = 24 * 60 * 60 * 1000; 
+    const oneDay = 24 * 60 * 60 * 1000;
 
     startDate.setHours(0, 0, 0, 0);
-  
+
     endDate.setHours(23, 59, 59, 999);
-  
-    const diffDays = Math.round((endDate - startDate) / oneDay) ;
-  
+
+    const diffDays = Math.round((endDate - startDate) / oneDay);
+
     return diffDays;
   }
 
   const handleExportData = async () => {
-   const startDateArray = startDateString.split("/");
+    const startDateArray = startDateString.split("/");
     const startDateISO = `${startDateArray[2]}-${startDateArray[1]}-${startDateArray[0]}`;
     const startDateTime = new Date(startDateISO);
     const endDateArray = endDateString.split("/");
@@ -117,9 +131,15 @@ const MyChoicesData = ({ route }) => {
     const endDateTime = new Date(endDateISO);
 
     if (isNaN(startDateTime) || isNaN(endDateTime)) {
-      Alert.alert("Invalid date format");
+      Alert.alert("שגיאה בהכנסת הנתונים");
       return;
     }
+
+    if (startDateTime > endDateTime) {
+      Alert.alert("שגיאה", " שימו לב, הוכנס תאריך סיום קטן מתאריך ההתחלה  ");
+      return;
+    }
+
     let querySnapshot;
 
     if (startDate && endDate) {
@@ -131,19 +151,23 @@ const MyChoicesData = ({ route }) => {
           myChoiceRef,
           where("date", ">=", startDateTime),
           where("date", "<=", endDateTime),
-          where("t_id", "==", auth.currentUser.uid)
+          where("t_id", "==", auth.currentUser.uid),
+          where("class_id", "==", classId)
         );
+
         querySnapshot = await getDocs(q);
+        if (querySnapshot.docs.length === 0) {
+          Alert.alert("שגיאה", "אין דיווחים בתאריכים הללו");
+          return;
+        }
 
         querySnapshot.forEach((doc) => {
           Idst.push(doc.id);
         });
 
         setIds(Idst);
-      }
-       catch (error) {
+      } catch (error) {
         Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
-        console.error("Error exporting data:", error);
       }
 
       const dates = [];
@@ -165,22 +189,30 @@ const MyChoicesData = ({ route }) => {
         })
       );
       setDates(dates);
-      const classId = querySnapshot.docs[0].data().class_id;
-          const temp = await getDoc(doc(db, "Classes", classId));
-          setClassDoc(temp);
+      const temp = await getDoc(doc(db, "Classes", classId));
+      setClassDoc(temp);
 
       try {
         const iconsRef = collection(db, "users");
         const q = query(iconsRef, where("t_id", "==", auth.currentUser.uid));
         const querySnapshot = await getDocs(q);
         const icons = [];
+        let name = "";
         querySnapshot.forEach((doc) => {
           const icon1 = doc.data().icons1;
           icons.push(icon1);
           const icon2 = doc.data().icons2;
           icons.push(icon2);
+          if (category === "MyChoice1") {
+            name = doc.data().myChoice1;
+          }
+          if (category === "MyChoice2") {
+            name = doc.data().myChoice2;
+          }
         });
         setIcons(icons);
+        setCategoryName(name);
+       
 
         if (category === "MyChoice1") {
           setIcon(icons[0]);
@@ -189,7 +221,6 @@ const MyChoicesData = ({ route }) => {
         }
       } catch (error) {
         Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
-        console.error("Error exporting data:", error);
       }
     }
   };
@@ -203,7 +234,6 @@ const MyChoicesData = ({ route }) => {
 
     setClickedDate(clickedDate);
 
-  
     const dateParts = clickedDate.split("/");
     const dateObject = new Date(
       `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
@@ -223,10 +253,10 @@ const MyChoicesData = ({ route }) => {
           if (timestamp === doc.data().date.seconds) {
             if (
               (icons[0] === true &&
-                doc.data().myChoice === "bed" &&
+                doc.data().myChoice === "sad" &&
                 category === "MyChoice1") ||
               (icons[1] === true &&
-                doc.data().myChoice === "bed" &&
+                doc.data().myChoice === "sad" &&
                 category === "MyChoice2")
             ) {
               names.push([
@@ -247,7 +277,6 @@ const MyChoicesData = ({ route }) => {
           }
         });
       });
-
 
       if (
         (icons[1] === false && category === "MyChoice2") ||
@@ -277,178 +306,200 @@ const MyChoicesData = ({ route }) => {
         const num = classDoc.data().numOfStudents || 1;
         setNumOfStudents(num);
         setPercentage(0);
-        const days= countDays(startDate, endDate);
-        const temp = (names.length*100)/ (numOfStudents*days);
+        const days = countDays(startDate, endDate);
+        const temp = (names.length * 100) / (numOfStudents * days);
         setPercentage(temp.toFixed(2));
         setShow(true);
-
       }
-
     } catch (error) {
       Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+    <View style={styles.container}>
       <View>
-        <View key={dates.length}>
-          <Toolbar />
-          <Text style={{ fontSize: 20, padding: 10 }}>היסטוריה </Text>
-          <View>
-            <Text>מתאריך: </Text>
-            <TextInput
-              style={[styles.input, { textAlign: "right" }]}
-              value={startDateString}
-              onChangeText={handleChangeStartDate}
-              placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-            />
-            {validDate ? (
-              <Text style={{ color: "green" }}>Correct date</Text>
-            ) : (
-              <Text style={{ color: "red" }}>Incorrect date</Text>
-            )}
-
-            <Text>עד תאריך: </Text>
-            <TextInput
-              style={[styles.input, { textAlign: "right" }]}
-              value={endDateString}
-              onChangeText={handleChangeEndDate}
-              placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-            />
-            {validDateTwo ? (
-              <Text style={{ color: "green" }}>Correct date</Text>
-            ) : (
-              <Text style={{ color: "red" }}>Incorrect date</Text>
-            )}
-
-            <TouchableOpacity onPress={handleExportData}>
-              <Text style={styles.continueButtonText}>הוצא נתונים</Text>
-            </TouchableOpacity>
-          </View>
-          {dates.map((item) => (
-            <TouchableOpacity onPress={() => check(item)} key={item}>
-              <View style={styles.dateItem}>
-                <Text style={styles.dateText}>{item}</Text>
-              </View>
-              {selectedDate === item && (
-                <View>
-                  {Object.entries(result).length > 0 &&
-                    icon ===
-                      true && (
-                        <View>
-                          <Text></Text>
-                          <Entypo name="emoji-sad" size={24} color="black" />
-                          {Object.entries(result).map(
-                            ([courseName, students]) => (
-                              <View key={courseName}>
-                                <Text style={{ fontWeight: "bold" }}>
-                                  {courseName}
-                                </Text>
-                                {students.map((student, index) => (
-                                  <Text key={`${student}-${index}`}>
-                                    {student.student}{" "}
-                                    {student.note ? `(${student.note})` : ""}
-                                  </Text>
-                                ))}
-                              </View>
-                            )
-                          )}
-                        </View>
-                      )}
-                      
-                      {Object.entries(result).length > 0 &&
-  icon === false && (
-    <View>
-      <Text></Text>
-      {Object.entries(result).map(([courseName, students]) => (
-        <View key={courseName}>
-          <Text style={{ fontWeight: "bold" }}>
-            {courseName}
-          </Text>
-          {students.map((student, index) => (
-            student.myChoice && (
-              <Text key={`${student}-${index}`}>
-                {student.student}{" "}
-                {student.myChoice ? `(${student.myChoice})` : ""}
-              </Text>
-            )
-          ))}
-        </View>
-      ))}
-    </View>
-  )}
-
-
-
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-
-{show === true && (
-<View>
-  <Text style={styles.percentageData}>
-    בטווח התאריכים הנ"ל ישנם 
-
-  {percentage}% של דיווחים בעלי אייקון עצוב.
-
-  </Text>
-</View>
-)}  
-        </View>
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
       </View>
-    </ScrollView>
+
+      <View style={styles.title}>
+        <Text style={styles.pageTitle}>
+          היסטוריית {categoryName} - {className}
+        </Text>
+      </View>
+
+      <View>
+        <Text style={styles.subTitle}>מתאריך: </Text>
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={startDateString}
+          onChangeText={handleChangeStartDate}
+          placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+        />
+        {startDateString && !validDate && (
+          <Text style={{ color: "red" }}>ערך לא תקין</Text>
+        )}
+
+        {validDate && <AntDesign name="check" size={24} color="green" />}
+      </View>
+
+      <View>
+        <Text style={styles.subTitle}>עד תאריך: </Text>
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={endDateString}
+          onChangeText={handleChangeEndDate}
+          placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+        />
+
+        {endDateString && !validDateTwo && (
+          <Text style={{ color: "red" }}>ערך לא תקין</Text>
+        )}
+
+        {validDateTwo && <AntDesign name="check" size={24} color="green" />}
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+        <TouchableOpacity onPress={handleExportData} style={styles.button}>
+          <Text style={styles.buttonText}>הוצא נתונים</Text>
+        </TouchableOpacity>
+
+        {dates.map((item) => (
+          <View key={item}>
+            <TouchableOpacity
+              onPress={() => check(item)}
+              style={[styles.button, { backgroundColor: "white" }]}
+            >
+              <View>
+                <Text style={styles.buttonText}>{item}</Text>
+              </View>
+            </TouchableOpacity>
+
+            {selectedDate === item && (
+              <View>
+                {Object.entries(result).length > 0 && icon === true && (
+                  <View style={{ alignItems: "center" }}>
+                    <Text></Text>
+                    <Entypo name="emoji-sad" size={24} color="black" />
+                    {Object.entries(result).map(([courseName, students]) => (
+                      <View key={courseName}>
+                        <Text
+                          style={{
+                            fontWeight: "bold",
+                            textAlign: "center",
+                            fontSize: 16,
+                            textDecorationLine: "underline",
+                          }}
+                        >
+                          {courseName}
+                        </Text>
+                        {students.map((student, index) => (
+                          <Text
+                            key={`${student}-${index}`}
+                            style={{ fontSize: 16, textAlign: "center" }}
+                          >
+                            {student.student}{" "}
+                            {student.note ? `(${student.note})` : ""}
+                          </Text>
+                        ))}
+                      </View>
+                    ))}
+
+                    {Object.entries(result).length === 0 && (
+                      <View>
+                        <Text style={{ fontSize: 14, textAlign: "center" }}>
+                          כל התלמידים בשיעור בתאריך זה קיבלו הערכה חיובית
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {Object.entries(result).length > 0 && icon === false && (
+                  <View>
+                    <Text></Text>
+                    {Object.entries(result).map(([courseName, students]) => (
+                      <View key={courseName}>
+                        <Text
+                          style={{
+                            fontWeight: "bold",
+                            textAlign: "center",
+                            fontSize: 16,
+                            textDecorationLine: "underline",
+                          }}
+                        >
+                          {courseName}
+                        </Text>
+                        {students.map(
+                          (student, index) =>
+                            student.myChoice && (
+                              <Text
+                                key={`${student}-${index}`}
+                                style={{ fontSize: 16, textAlign: "center" }}
+                              >
+                                {student.student}{" "}
+                                {student.myChoice
+                                  ? `(${student.myChoice})`
+                                  : ""}
+                              </Text>
+                            )
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        ))}
+
+        {/* {show === true && (
+          <View>
+            <Text style={styles.percentageData}>
+              בטווח התאריכים הנ"ל ישנם
+              {percentage}% של דיווחים בעלי אייקון עצוב.
+            </Text>
+          </View>
+        )} */}
+
+        
+        <Text>{"\n\n\n\n\n\n"}</Text>
+      </ScrollView>
+
+      <Navbar />
+    </View>
   );
 };
 
 export default MyChoicesData;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
   input: {
     height: 40,
-    margin: 12,
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
-    borderRadius: 10,
-    borderColor: "gray",
+    width: 300,
+    backgroundColor: "white",
   },
-  button: {
-    alignItems: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: "white",
-  },
-  sectionHeader: {
-    paddingTop: 2,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 2,
-    fontSize: 14,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "bold",
-    backgroundColor: "rgba(247,247,247,1.0)",
+    textAlign: "center",
   },
+
   item: {
     padding: 10,
     fontSize: 18,
     height: 44,
   },
-  continueButtonText: {
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
   },
+
   dateItem: {
     alignItems: "center",
     justifyContent: "center",
@@ -458,8 +509,79 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   percentageData: {
-    fontSize:18,
-    fontWeight:'bold',
+    fontSize: 18,
+    fontWeight: "bold",
+  },
 
-  }
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 20,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
+  },
 });

@@ -2,20 +2,18 @@ import React from "react";
 import {
   View,
   TextInput,
-  Button,
-  useState,
   StyleSheet,
   Text,
   TouchableOpacity,
-  ScrollView,
   Image,
-  Alert,
+  Alert,Dimensions
 } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { auth } from "./firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+
+const { width } = Dimensions.get("window");
+
 
 const FullLogin = () => {
   const navigation = useNavigation();
@@ -32,18 +30,18 @@ const FullLogin = () => {
   };
 
   return (
-    <View style={styles.mainView}>
+    <View style={styles.container}>
       <Image style={styles.image} source={require("../assets/logo2.png")} />
       <TextInput
         style={[styles.input, { textAlign: "right" }]}
-        placeholder=' דוא"ל:'
+        placeholder=' הכנס/י דוא"ל'
         value={email}
         onChangeText={(text) => setEmail(text)}
         autoCapitalize="none"
       ></TextInput>
       <TextInput
         style={[styles.input, { textAlign: "right" }]}
-        placeholder="סיסמא:"
+        placeholder='הכנס/י סיסמא'
         value={password}
         onChangeText={(text) => setPassword(text)}
         secureTextEntry
@@ -72,45 +70,82 @@ const FullLogin = () => {
 export default FullLogin;
 
 const styles = StyleSheet.create({
-  mainView: {
+  container: {
     alignItems: "center",
     padding: 50,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
   },
   input: {
     backgroundColor: "white",
     width: "100%",
-    height: "10%",
+    height: "8%",
     borderColor: "#e8e8e8",
     borderWidth: 1,
     borderRadius: 5,
-    paddingHorizintal: 10,
-    marginVertical: 10,
+    paddingHorizintal: 5,
+    marginVertical: 5,
     textAlign: "rigth",
   },
   image: {
     width: "100%",
-    // maxWidth: 300,
-    // maxHeight: 200,
   },
   login: {
-    backgroundColor: "#1E90FF",
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
     alignItems: "center",
-    top: 30,
-    borderRadius: 200,
-    padding: 18,
-    height: 60,
-    width: "50%",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+
   },
   signup: {
-    backgroundColor: "#87CEFA",
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
     alignItems: "center",
-    top: 40,
-    borderRadius: 200,
-    padding: 18,
-    width: "50%",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   fpassword: {
-    top: 50,
     textAlign: "center",
   },
+  text:{
+    color:'#A4907C',
+    fontSize: 24,
+
+  }
 });

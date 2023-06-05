@@ -4,15 +4,12 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useColorScheme,Dimensions,ScrollView,
+ Dimensions,
   Alert,
-  Modal,
   Image,
 } from "react-native";
-import Toolbar from "./Toolbar";
 import Navbar from './Navbar'
 import { useNavigation } from "@react-navigation/native";
-import { MaterialIcons } from "@expo/vector-icons";
 import { auth, db } from "./firebase";
 import {
   collection,
@@ -548,7 +545,7 @@ const HomePage = () => {
       <TouchableOpacity
       style={[styles.button, styles.shadow]}
       onPress={() =>
-          navigation.navigate('ChooseClass', { param1: 'Scores' })
+          navigation.navigate('ChooseClass', { reported: 'Scores' })
         }
       >
         <Text style={styles.buttonText}>ציונים</Text>
@@ -557,7 +554,7 @@ const HomePage = () => {
       <TouchableOpacity
       style={[styles.button, styles.shadow]}
       onPress={() =>
-          navigation.navigate('ChooseClass', { param1: 'Presence' })
+          navigation.navigate('ChooseClass', { reported: 'Presence' })
         }
       >
         <Text style={styles.buttonText}>נוכחות</Text>
@@ -569,7 +566,7 @@ const HomePage = () => {
     <TouchableOpacity
       style={[styles.button, styles.shadow]}
       onPress={() =>
-        navigation.navigate('ChooseClass', { param1: 'FriendStatus' })
+        navigation.navigate('ChooseClass', { reported: 'FriendStatus' })
       }
     >
       <Text style={styles.buttonText}>מצב חברתי</Text>
@@ -578,7 +575,7 @@ const HomePage = () => {
     <TouchableOpacity
       style={[styles.button, styles.shadow]}
       onPress={() =>
-        navigation.navigate('ChooseClass', { param1: 'Mood' })
+        navigation.navigate('ChooseClass', { reported: 'Mood' })
       }
     >
       <Text style={styles.buttonText}>מצב רוח</Text>
@@ -590,7 +587,7 @@ const HomePage = () => {
     <TouchableOpacity
       style={[styles.button, styles.shadow]}
       onPress={() =>
-        navigation.navigate('ChooseClass', { param1: 'Appearances' })
+        navigation.navigate('ChooseClass', { reported: 'Appearances' })
       }
     >
       <Text style={styles.buttonText}>נראות</Text>
@@ -599,7 +596,7 @@ const HomePage = () => {
     <TouchableOpacity
       style={[styles.button, styles.shadow]}
       onPress={() =>
-        navigation.navigate('ChooseClass', { param1: 'Diet' })
+        navigation.navigate('ChooseClass', { reported: 'Diet' })
       }
     >
       <Text style={styles.buttonText}>תזונה</Text>
@@ -611,7 +608,7 @@ const HomePage = () => {
     <TouchableOpacity
       style={[styles.button, styles.shadow]}
       onPress={() =>
-        navigation.navigate('ChooseClass', { param1: 'Events' })
+        navigation.navigate('ChooseClass', { reported: 'Events' })
       }
     >
       <Text style={styles.buttonText}>אירועים מיוחדים</Text>
@@ -631,7 +628,7 @@ const HomePage = () => {
       <TouchableOpacity
       style={[styles.button, styles.shadow, {backgroundColor:'white'}]}
       onPress={() =>
-          navigation.navigate('ChooseClass', { param1: 'myChoice1' })
+          navigation.navigate('ChooseClass', { reported: 'myChoice1' })
         }
       >
         <Text style={styles.buttonText}>{myChoice1}</Text>
@@ -642,7 +639,7 @@ const HomePage = () => {
       <TouchableOpacity
       style={[styles.button, styles.shadow, {backgroundColor:'white'}]}
         onPress={() =>
-          navigation.navigate('ChooseClass', { param1: 'myChoice2' })
+          navigation.navigate('ChooseClass', { reported: 'myChoice2' })
         }
       >
         <Text style={styles.buttonText}>{myChoice2}</Text>

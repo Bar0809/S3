@@ -6,12 +6,16 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
+  Alert, Dimensions, Image
 } from "react-native";
+import { FontAwesome5 } from '@expo/vector-icons'; 
+
 import { Entypo } from "@expo/vector-icons";
-import Toolbar from "./Toolbar";
 import { collection, query, where, getDocs , doc, updateDoc} from "firebase/firestore";
 import { db, auth } from "./firebase";
+import Navbar from './Navbar';
+
+const { width } = Dimensions.get("window");
 
 
 const SetRules = () => {
@@ -1015,25 +1019,38 @@ const querySnapshot = await getDocs(q);
   };
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <Toolbar />
-        <Text style={styles.title}>הגדרת תנאי הרמזור: </Text>
-        <Text style={styles.subtitle}>אז מה זה בעצם הרמזור?</Text>
-        <Text>
+<View style={styles.container}>
+      <View>
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+      </View>
+
+      <View style={styles.title}>
+
+        <Text style={[styles.pageTitle, { textAlign: "center" }]}>
+        הגדרת תנאי הרמזור: 
+        </Text>
+</View>
+
+        <Text style={[styles.pageTitle, { textAlign: "center" , fontSize:30,textDecorationLine:'underline'}]}>
+         אז מה זה בעצם הרמזור? </Text>
+      
+       <Text>
           כל כיתה תקבל צבע מתוך צבעי הרמזור - ירוק, כתום או אדום בהתאם לדיווחים
           שדווחו על ידך בשבוע האחרון.{"\n"}
         </Text>
-        <Text style={styles.title}>הגדרת הרמזור:</Text>
+                <Text style={[styles.pageTitle, { textAlign: "center" , fontSize:24,textDecorationLine:'underline'}]}>הגדרת הרמזור:</Text>
+
+      <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+      
 
 <TouchableOpacity onPress={toggleGreen}>
-          <Text style={[{ textAlign: 'center', textDecorationLine: 'underline', fontSize:14 , color:'green' }]}>איזור הירוק: </Text>
+          <Text style={[{ textAlign: 'center', textDecorationLine: 'underline', fontSize:20 , color:'green' }]}>איזור הירוק: </Text>
         </TouchableOpacity>
         {green && (
-          <View>
+          <View style={{alignItems:'center' , textAlign:'center'}}> 
             <View>
-              <Text>קטגוריית נראות: </Text>
-              <Entypo name="emoji-happy" size={24} color="black" />
+              <Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית נראות: </Text>
+              <Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
               {appearancesIsEditMode[0] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1075,7 +1092,7 @@ const querySnapshot = await getDocs(q);
                   </TouchableOpacity>
                 </View>
               )}
-              <Entypo name="emoji-sad" size={24} color="black" />
+              <Entypo name="emoji-sad" size={24} color="black"  style={{textAlign:'center', alignItems:'center' }}/>
               {appearancesIsEditMode[1] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1120,8 +1137,8 @@ const querySnapshot = await getDocs(q);
             </View>
 
             <View>
-              <Text>קטגוריית תזונה: </Text>
-              <Entypo name="emoji-happy" size={24} color="black" />
+              <Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית תזונה: </Text>
+              <Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
               {dietIsEditMode[0] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1156,7 +1173,7 @@ const querySnapshot = await getDocs(q);
               )}
 
 
-              <Entypo name="emoji-sad" size={24} color="black" />
+              <Entypo name="emoji-sad" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
               {dietIsEditMode[1] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1193,8 +1210,8 @@ const querySnapshot = await getDocs(q);
             </View>
 
             <View>
-              <Text>קטגוריית מצב נפשי: </Text>
-              <Entypo name="emoji-happy" size={24} color="black" />
+              <Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית מצב נפשי: </Text>
+              <Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
               {moodIsEditMode[0] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1228,7 +1245,7 @@ const querySnapshot = await getDocs(q);
                 </View>
               )}
 
-              <Entypo name="emoji-neutral" size={24} color="black" />
+              <Entypo name="emoji-neutral" size={24} color="black" style={{textAlign:'center', alignItems:'center' }}/>
               {moodIsEditMode[1] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1262,7 +1279,7 @@ const querySnapshot = await getDocs(q);
                 </View>
               )}
 
-              <Entypo name="emoji-sad" size={24} color="black" />
+              <Entypo name="emoji-sad" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
               {moodIsEditMode[2] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1298,8 +1315,8 @@ const querySnapshot = await getDocs(q);
             </View>
 
             <View>
-              <Text>קטגוריית מצב חברתי: </Text>
-              <Entypo name="emoji-happy" size={24} color="black" />
+              <Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית מצב חברתי: </Text>
+              <Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }}/>
               {friendStatusIsEditMode[0] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1341,7 +1358,7 @@ const querySnapshot = await getDocs(q);
                   </TouchableOpacity>
                 </View>
               )}
-              <Entypo name="emoji-neutral" size={24} color="black" />
+              <Entypo name="emoji-neutral" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
               {friendStatusIsEditMode[1] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1383,7 +1400,7 @@ const querySnapshot = await getDocs(q);
                   </TouchableOpacity>
                 </View>
               )}
-              <Entypo name="emoji-sad" size={24} color="black" />
+              <Entypo name="emoji-sad" size={24} color="black"  style={{textAlign:'center', alignItems:'center' }}/>
               {friendStatusIsEditMode[2] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1428,7 +1445,7 @@ const querySnapshot = await getDocs(q);
             </View>
 
             <View>
-              <Text> קטגוריית נוכחות:</Text>
+              <Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית נוכחות:</Text>
               <Text> נוכחות</Text>
               {presenceIsEditMode[0] ? (
                 <View style={styles.editModeContainer}>
@@ -1545,7 +1562,7 @@ const querySnapshot = await getDocs(q);
             </View>
 
             <View>
-              <Text> קטגוריית אירועים שליליים:</Text>
+              <Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית אירועים שליליים:</Text>
               {eventsIsEditMode[0] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1583,13 +1600,13 @@ const querySnapshot = await getDocs(q);
         )}
 
 <TouchableOpacity onPress={toggleOrange}>
-      <Text style={[{ textAlign: 'center', textDecorationLine: 'underline', fontSize:14 , color:'orange' }]}>איזור הכתום: </Text>
+      <Text style={[{ textAlign: 'center', textDecorationLine: 'underline', fontSize:20 , color:'orange' }]}>איזור הכתום: </Text>
     </TouchableOpacity>
 {orange && (
         <View>
         <View>
-<Text>קטגוריית נראות: </Text>
-<Entypo name="emoji-happy" size={24} color="black" />
+<Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית נראות: </Text>
+<Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 {appearancesIsEditMode[2] ? (
   <View style={styles.editModeContainer}>
    <TextInput
@@ -1616,7 +1633,7 @@ const querySnapshot = await getDocs(q);
 
   </View>
 )}
-<Entypo name="emoji-sad" size={24} color="black" />
+<Entypo name="emoji-sad" size={24} color="black"  style={{textAlign:'center', alignItems:'center' }}/>
 {appearancesIsEditMode[3] ? (
   <View style={styles.editModeContainer}>  
     <TextInput
@@ -1646,8 +1663,8 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text>קטגוריית תזונה: </Text>
-<Entypo name="emoji-happy" size={24} color="black" />
+<Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית תזונה: </Text>
+<Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
   {dietIsEditMode[2] ? (
   <View style={styles.editModeContainer}>
    <TextInput
@@ -1673,7 +1690,7 @@ const querySnapshot = await getDocs(q);
 
   </View>
 )}
-<Entypo name="emoji-sad" size={24} color="black" />
+<Entypo name="emoji-sad" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 {dietIsEditMode[3] ? (
   <View style={styles.editModeContainer}>
     <TextInput
@@ -1703,8 +1720,8 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text>קטגוריית מצב נפשי: </Text>
-<Entypo name="emoji-happy" size={24} color="black" />
+<Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית מצב נפשי: </Text>
+<Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
   {moodIsEditMode[3] ? (
   <View style={styles.editModeContainer}>
    <TextInput
@@ -1731,7 +1748,7 @@ const querySnapshot = await getDocs(q);
   </View>
 )}
 
-<Entypo name="emoji-neutral" size={24} color="black" />
+<Entypo name="emoji-neutral" size={24} color="black" style={{textAlign:'center', alignItems:'center' }}/>
 {moodIsEditMode[4] ? (
   <View style={styles.editModeContainer}>
     <TextInput
@@ -1756,7 +1773,7 @@ const querySnapshot = await getDocs(q);
 
  </View>
 )}
-<Entypo name="emoji-sad" size={24} color="black" />
+<Entypo name="emoji-sad" size={24} color="black" style={{textAlign:'center', alignItems:'center' }}/>
 {moodIsEditMode[5] ? (
   <View style={styles.editModeContainer}>
     <TextInput
@@ -1786,8 +1803,8 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text>קטגוריית מצב חברתי: </Text>
-<Entypo name="emoji-happy" size={24} color="black" />
+<Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית מצב חברתי: </Text>
+<Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
   {friendStatusIsEditMode[3] ? (
   <View style={styles.editModeContainer}>
    <TextInput
@@ -1813,7 +1830,7 @@ const querySnapshot = await getDocs(q);
 
   </View>
 )}
-<Entypo name="emoji-neutral" size={24} color="black" />
+<Entypo name="emoji-neutral" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 {friendStatusIsEditMode[4] ? (
   <View style={styles.editModeContainer}>
     <TextInput
@@ -1840,7 +1857,7 @@ const querySnapshot = await getDocs(q);
 
  </View>
 )}
-<Entypo name="emoji-sad" size={24} color="black" />
+<Entypo name="emoji-sad" size={24} color="black" style={{textAlign:'center', alignItems:'center' }}/>
 {friendStatusIsEditMode[5] ? (
   <View style={styles.editModeContainer}>
     <TextInput
@@ -1870,7 +1887,7 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text> קטגוריית נוכחות:</Text>
+<Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית נוכחות:</Text>
 <Text> נוכחות</Text>
 {presenceIsEditMode[3] ? (
   <View style={styles.editModeContainer}>
@@ -1945,7 +1962,7 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text> קטגוריית אירועים מיוחדים:</Text>
+<Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית אירועים מיוחדים:</Text>
 {eventsIsEditMode[1] ? (
   <View style={styles.editModeContainer}>
    <TextInput
@@ -1973,21 +1990,21 @@ const querySnapshot = await getDocs(q);
     )}
     
     <TouchableOpacity onPress={toggleRed}>
-      <Text style={[{ textAlign: 'center', textDecorationLine: 'underline', fontSize:14 , color:'red' }]}>איזור האדום: </Text>
+      <Text style={[{ textAlign: 'center', textDecorationLine: 'underline', fontSize:20 , color:'red' }]}>איזור האדום: </Text>
     </TouchableOpacity>
 
     {red && (
       <View>
         <Text style={[{ fontWeight: "bold" }]}>כדי לשנות את הערכים באיזור האדום, עליך לשנות את המידע באיזור הכתום </Text>
       <View>
-    <Text>קטגוריית נראות: </Text>
-    <Entypo name="emoji-happy" size={24} color="black" />
+    <Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית נראות: </Text>
+    <Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}>  פחות מ-{appearancesPercentage[2]}% </Text>
 </View>
 
 
-<Entypo name="emoji-sad" size={24} color="black" />
+<Entypo name="emoji-sad" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 <View style={styles.viewModeContainer}>
    <Text style={styles.percentageText}>יותר מ-  {appearancesPercentage[3]}%</Text>
 </View>
@@ -1995,14 +2012,14 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text>קטגוריית תזונה: </Text>
-<Entypo name="emoji-happy" size={24} color="black" />
+<Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית תזונה: </Text>
+<Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}>פחות מ- {dietPercentage[2]}% </Text>
 
 </View>
 
-<Entypo name="emoji-sad" size={24} color="black" />
+<Entypo name="emoji-sad" size={24} color="black"  style={{textAlign:'center', alignItems:'center' }}/>
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}>יותר מ- {dietPercentage[3]}%</Text>
 
@@ -2011,8 +2028,8 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text>קטגוריית מצב נפשי: </Text>
-<Entypo name="emoji-happy" size={24} color="black" />
+<Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית מצב נפשי: </Text>
+<Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}>פחות מ- {moodPercentage[3]}%</Text>
 
@@ -2020,14 +2037,14 @@ const querySnapshot = await getDocs(q);
 </View>
 
 
-<Entypo name="emoji-neutral" size={24} color="black" />
+<Entypo name="emoji-neutral" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}> יותר מ- {moodPercentage[4]}%</Text>
  
 </View>
 
-<Entypo name="emoji-sad" size={24} color="black" />
+<Entypo name="emoji-sad" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}>יותר מ- {moodPercentage[5]}%</Text>
 
@@ -2035,21 +2052,21 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text>קטגוריית מצב חברתי: </Text>
-<Entypo name="emoji-happy" size={24} color="black" />
+<Text style={{fontWeight:'bold', fontSize:18}}>קטגוריית מצב חברתי: </Text>
+<Entypo name="emoji-happy" size={24} color="black"  style={{textAlign:'center', alignItems:'center' }}/>
 
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}>פחות מ- {friendStatusPercentage[3]}%</Text>
 </View>
 
-<Entypo name="emoji-neutral" size={24} color="black" />
+<Entypo name="emoji-neutral" size={24} color="black"  style={{textAlign:'center', alignItems:'center' }}/>
 <View style={styles.viewModeContainer}>
     <Text style={styles.percentageText}> יותר מ- {friendStatusPercentage[4]}% </Text>
 
 
 </View>
 
-<Entypo name="emoji-sad" size={24} color="black" />
+<Entypo name="emoji-sad" size={24} color="black" style={{textAlign:'center', alignItems:'center' }}/>
 
 <View style={styles.viewModeContainer}>
     <Text style={styles.percentageText}>יותר מ- {friendStatusPercentage[5]}%</Text>
@@ -2059,7 +2076,7 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text> קטגוריית נוכחות:</Text>
+<Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית נוכחות:</Text>
 <Text> נוכחות</Text>
 
 <View style={styles.viewModeContainer}>
@@ -2084,7 +2101,7 @@ const querySnapshot = await getDocs(q);
 </View>
 
 <View>
-<Text> קטגוריית אירועים מיוחדים:</Text>
+<Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית אירועים מיוחדים:</Text>
 
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}> יותר מ-{eventsPercentage[1]}</Text>
@@ -2094,28 +2111,38 @@ const querySnapshot = await getDocs(q);
 </View>
     </View>
     )}
-
-        
+</ScrollView>  
       </View>
-    </ScrollView>
+ 
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
+  }, title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
   },
-  title: {
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
     fontSize: 20,
+    textAlign: "right",
     fontWeight: "bold",
-    textDecorationLine: "underline",
   },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-  },
+  
   ruleTitle: {
     color: "green",
     fontWeight: "bold",
@@ -2141,14 +2168,32 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   button: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "blue",
-    borderRadius: 5,
+    width: width * 0.20,
+    height: 45,
+    justifyContent: 'center',
+    backgroundColor: '#F1DEC9',
+    borderWidth: 2,
+    borderColor:'#F1DEC9',
+    alignItems: 'center',
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0, 0, 0, 0.25)',
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   buttonText: {
-    color: "white",
-    fontWeight: "bold",
+    fontSize: 20,
+    color: '#AD8E70',
   },
 });
 

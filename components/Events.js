@@ -3,18 +3,14 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
-  FlatList,
-  Alert,
+  ScrollView,
+  Image,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
-import Toolbar from "./Toolbar";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import { RadioButton } from "react-native-paper";
-import { Entypo } from "@expo/vector-icons";
+import Navbar from "./Navbar";
 
 const Events = ({ route }) => {
   const navigation = useNavigation();
@@ -55,38 +51,34 @@ const Events = ({ route }) => {
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handlePress(item.id, item.student_name)}>
       <View style={{ padding: 10 }}>
-        <Text>{item.student_name}</Text>
+        <Text style={styles.itemText}>{item.student_name}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={[{ alignItems: "center" }]}>
-      <Toolbar />
-
-      <View style={styles.title}>
-        <Text style={styles.pageTitle}> {className} </Text>
+    <View style={styles.container}>
+      <View>
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
       </View>
 
-      <Text style={styles.subTitle}>בחר/י את התלמיד/ה הרצוי</Text>
+      <View style={styles.title}>
+        <Text style={[styles.pageTitle]}>{className} - אירועים מיוחדים</Text>
+      </View>
 
-      <Text
-        style={[
-          {
-            textAlign: "right",
-            fontSize: 20,
-            fontWeight: "bold",
-            textDecorationLine: "underline",
-          },
-        ]}
-      >
-        רשימת תלמידים:
-      </Text>
-      <FlatList
-        data={students}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-      />
+      <Text style={styles.subTitle}> בחר/י את התלמיד/ה הרצוי/ה</Text>
+      <ScrollView style={styles.scrollContainer}>
+        <View>
+          {students.map((student) => (
+            <View key={student.id} style={styles.itemContainer}>
+              {renderItem({ item: student })}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+      <Text>{"\n\n\n\n\n\n"}</Text>
+
+      <Navbar />
     </View>
   );
 };
@@ -94,19 +86,50 @@ const Events = ({ route }) => {
 export default Events;
 
 const styles = StyleSheet.create({
-  back: {
-    padding: "30%",
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  subTitle: {
-    color: "red",
-    fontWeight: "bold",
-    fontSize: 18,
+  itemContainer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 20,
     textAlign: "right",
   },
-  pageTitle: {
-    color: "black",
-    fontSize: 30,
-    fontWeight: "bold",
+
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 24,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  scrollContainer: {
+    // flex: 1,
+    height: "80%",
+    width: "100%",
   },
 });

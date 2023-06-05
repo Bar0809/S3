@@ -4,17 +4,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  FlatList,
   Alert,
-  ScrollView,
+  ScrollView, Image, Dimensions
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import Toolbar from "./Toolbar";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { RadioButton } from "react-native-paper";
+import Navbar from "./Navbar";
+import { AntDesign } from '@expo/vector-icons'; 
+
+const { width } = Dimensions.get('window');
+
 
 const Presence = ({ route }) => {
   const navigation = useNavigation();
@@ -58,10 +61,9 @@ const Presence = ({ route }) => {
     }
 
     const day = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
+    const month = parseInt(match[2], 10) - 1
     const year = parseInt(match[3], 10);
 
-    // Check if the date is valid
     const date = new Date(year, month, day);
     if (
       date.getFullYear() !== year ||
@@ -71,21 +73,19 @@ const Presence = ({ route }) => {
       return null;
     }
 
-    // Check if the month is valid
+
     if (month > 11) {
       return null;
     }
 
-    // Check if the day is valid for the given month and year
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
     if (day > lastDayOfMonth) {
       return null;
     }
 
-    // Check if the date is within the desired range
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
-    if (date < minDate || date > currentDate) {
+    if (date < minDate || date >= currentDate) {
       Alert.alert("", "לא ניתן להכניס תאריך עתידי");
       return null;
     }
@@ -112,7 +112,6 @@ const Presence = ({ route }) => {
       return;
     }
 
-    // Check if a document with the same date and course_id exists
     const q = query(
       collection(db, "Presence"),
       where("date", "==", dateString),
@@ -124,16 +123,16 @@ const Presence = ({ route }) => {
     const startDateTime = new Date(startDateISO);
     if (querySnapshot.size > 0) {
       Alert.alert(
-        "Add report",
-        "Note that there is an attendance report for this course on the above date. Do you want to continue?",
+        "הוספת דיווח ",
+        "שימו לב, יש דוח נוכחות בתאריך זה למקצוע זה. האם ברצונכם להמשיך?",
         [
           {
-            text: "No",
+            text: "לא",
             onPress: () => navigation.navigate("HomePage"),
             style: "cancel",
           },
           {
-            text: "Yes",
+            text: "כן",
             onPress: async () => {
               const presenceData = students.map((student) => {
                 return {
@@ -196,53 +195,63 @@ const Presence = ({ route }) => {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+         <View style={styles.container}>
       <View>
-        <Toolbar />
-        <View style={styles.report}>
-          <Text style={{ fontSize: 20, padding: 10 }}> צור/י דיווח חדש</Text>
-          <Ionicons name="create-outline" size={24} color="black" />
-        </View>
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+      </View>
+  
+      <View style={styles.title}>
+        <Text style={styles.pageTitle}> דיווח נוכחות - {className}</Text>
+      </View>
 
-        <View>
-          <Text>תאריך</Text>
-          <TextInput
-            style={[styles.input, { textAlign: "right" }]}
-            value={dateString}
-            onChangeText={handleChangeText}
-            placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-          />
-          {validDate ? (
-            <Text style={{ color: "green" }}>Correct date</Text>
-          ) : (
-            <Text style={{ color: "red" }}>Incorrect date</Text>
-          )}
-        </View>
+            <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+
+<View style={styles.container}>
+  <View style={styles.row}>
+    <Text style={styles.subTitle}>תאריך</Text>
+    <TextInput
+      style={[styles.input, { textAlign: "right" }]}
+      value={dateString}
+      onChangeText={handleChangeText}
+      placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
+    />
+    {dateString && !validDate && (
+      <Text style={{ color: "red" }}>ערך לא תקין</Text>
+    )}
+  </View>
+  {validDate && (
+    <AntDesign name="check" size={24} color="green" />
+  )}
+
+  
+</View>
+
 
         <View
           style={[{ flexDirection: "row", justifyContent: "space-around" }]}
         >
           <Text
-            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16, textDecorationLine: 'underline' }]}
           >
             איחור
           </Text>
           <Text
-            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16,textDecorationLine: 'underline' }]}
           >
             חיסור
           </Text>
           <Text
-            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16,textDecorationLine: 'underline' }]}
           >
             נוכח/ת
           </Text>
           <Text
-            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 }]}
+            style={[{ textAlign: "right", fontWeight: "bold", fontSize: 16 ,textDecorationLine: 'underline'}]}
           >
             שם התלמיד/ה
           </Text>
         </View>
+        
 
         {students.map((item) => (
           <View style={styles.nameContainer} key={item.id}>
@@ -292,13 +301,19 @@ const Presence = ({ route }) => {
           </View>
         ))}
 
-        <TouchableOpacity style={[styles.butt]} onPress={createReport}>
+        <TouchableOpacity style={[styles.button]} onPress={createReport}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
+            <Text style={styles.buttonText}> שלח/י דיווח</Text>
           </View>
         </TouchableOpacity>
+        <Text>{"\n\n\n\n\n\n"}</Text>
+
+ </ScrollView>
+
+        <Navbar/> 
       </View>
-    </ScrollView>
+     
+   
   );
 };
 
@@ -312,9 +327,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
 
-  container: {
-    padding: 16,
-  },
+ 
   nameContainer: {
     flexDirection: "row-reverse",
     justifyContent: "flex-end",
@@ -352,11 +365,81 @@ const styles = StyleSheet.create({
     width: 300,
     backgroundColor: "white",
   },
-  butt: {
-    backgroundColor: "#90EE90",
+container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse", 
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 48,
+    fontWeight: "bold",
     padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-    width: 100,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 24,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
   },
 });

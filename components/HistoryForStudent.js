@@ -4,19 +4,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  FlatList,
+  Image,
   Alert,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
-import Toolbar from "./Toolbar";
+import Navbar from "./Navbar";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db, auth } from "./firebase";
-import { RadioButton } from "react-native-paper";
-import { Entypo } from "@expo/vector-icons";
 
+import { AntDesign } from "@expo/vector-icons";
+
+const { width } = Dimensions.get("window");
 
 const HistoryForStudent = ({ route }) => {
   const { student_name } = route.params;
@@ -421,7 +421,6 @@ const HistoryForStudent = ({ route }) => {
         Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
         console.log(error.message);
       }
-   
     }
   };
 
@@ -731,46 +730,70 @@ const HistoryForStudent = ({ route }) => {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+    <View style={styles.container}>
       <View>
-        <Toolbar />
-        <Text style={{ fontSize: 20, padding: 10 }}>היסטוריה </Text>
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+      </View>
+
+      <View style={styles.title}>
+        <Text style={[styles.pageTitle, { textAlign: "center" }]}>
+          היסטוריית דיווחים - {"\n"}
+          {student_name}{" "}
+        </Text>
+      </View>
+
+      <View>
+        <Text style={styles.subTitle}>מתאריך: </Text>
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={startDateString}
+          onChangeText={handleChangeStartDate}
+          placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+        />
+        {startDateString && !validDate && (
+          <Text style={{ color: "red" }}>ערך לא תקין</Text>
+        )}
+
+        {validDate && <AntDesign name="check" size={24} color="green" />}
+      </View>
+
+      <View>
+        <Text style={styles.subTitle}>עד תאריך: </Text>
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={endDateString}
+          onChangeText={handleChangeEndDate}
+          placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+        />
+
+        {endDateString && !validDateTwo && (
+          <Text style={{ color: "red" }}>ערך לא תקין</Text>
+        )}
+
+        {validDateTwo && <AntDesign name="check" size={24} color="green" />}
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
         <View>
-          <Text>מתאריך: </Text>
-          <TextInput
-            style={[styles.input, { textAlign: "right" }]}
-            value={startDateString}
-            onChangeText={handleChangeStartDate}
-            placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-          />
-          {validDate ? (
-            <Text style={{ color: "green" }}>Correct date</Text>
-          ) : (
-            <Text style={{ color: "red" }}>Incorrect date</Text>
-          )}
-
-          <Text>עד תאריך: </Text>
-          <TextInput
-            style={[styles.input, { textAlign: "right" }]}
-            value={endDateString}
-            onChangeText={handleChangeEndDate}
-            placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-          />
-          {validDateTwo ? (
-            <Text style={{ color: "green" }}>Correct date</Text>
-          ) : (
-            <Text style={{ color: "red" }}>Incorrect date</Text>
-          )}
-
-          <View>
-            <TouchableOpacity onPress={handlePresenceButton}>
-              <Text style={styles.continueButtonText}>נוכחות </Text>
-            </TouchableOpacity>
-            {presenceForShow &&
+          <TouchableOpacity
+            onPress={handlePresenceButton}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}>נוכחות </Text>
+          </TouchableOpacity>
+          {presenceForShow &&
+            (Object.entries(presenceResult).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(presenceResult).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
@@ -781,7 +804,7 @@ const HistoryForStudent = ({ route }) => {
                     } else if (presence === "late") {
                       presenceLabel = "delay";
                     } else {
-                      presenceLabel = "נוכחות";
+                      presenceLabel = "נוכח/ת";
                     }
 
                     return (
@@ -789,16 +812,28 @@ const HistoryForStudent = ({ route }) => {
                     );
                   })}
                 </View>
-              ))}
+              ))
+            ))}
 
-            <TouchableOpacity onPress={handleScoresButton}>
-              <Text style={styles.continueButtonText}>ציונים </Text>
-            </TouchableOpacity>
-            {scoreForShow &&
+          <TouchableOpacity
+            onPress={handleScoresButton}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}>ציונים </Text>
+          </TouchableOpacity>
+          {scoreForShow &&
+            (Object.entries(scoreResult).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(scoreResult).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
@@ -810,27 +845,39 @@ const HistoryForStudent = ({ route }) => {
                     </Text>
                   ))}
                 </View>
-              ))}
+              ))
+            ))}
 
-            <TouchableOpacity onPress={handleMoodButton}>
-              <Text style={styles.continueButtonText}>מצב נפשי </Text>
-            </TouchableOpacity>
-            {moodForShow &&
+          <TouchableOpacity
+            onPress={handleMoodButton}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}>מצב רוח </Text>
+          </TouchableOpacity>
+          {moodForShow &&
+            (Object.entries(moodResult).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(moodResult).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
                   {data.map(({ date, mood, note }) => {
                     let label = mood;
-                    if (mood === "bed") {
-                      label = "לא טוב";
+                    if (mood === "sad") {
+                      label = "הערכה שלילית";
                     } else if (mood === "medium") {
-                      label = "בינוני";
+                      label = "הערכה בינונית";
                     } else {
-                      label = "טוב";
+                      label = "הערכה חיובית";
                     }
                     return (
                       <Text key={date}>
@@ -841,27 +888,39 @@ const HistoryForStudent = ({ route }) => {
                     );
                   })}
                 </View>
-              ))}
+              ))
+            ))}
 
-            <TouchableOpacity onPress={handleFriendStatusButton}>
-              <Text style={styles.continueButtonText}>מצב חברתי </Text>
-            </TouchableOpacity>
-            {friendStatusForShow &&
+          <TouchableOpacity
+            onPress={handleFriendStatusButton}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}>מצב חברתי </Text>
+          </TouchableOpacity>
+          {friendStatusForShow &&
+            (Object.entries(friendStatusResult).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(friendStatusResult).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
                   {data.map(({ date, friendStatus, note }) => {
                     let label = friendStatus;
-                    if (friendStatus === "bed") {
-                      label = "לא טוב";
+                    if (friendStatus === "sad") {
+                      label = "הערכה שלילית";
                     } else if (friendStatus === "medium") {
-                      label = "בינוני";
+                      label = "הערכה בינונית";
                     } else {
-                      label = "טוב";
+                      label = "הערכה חיובית";
                     }
                     return (
                       <Text key={date}>
@@ -872,25 +931,38 @@ const HistoryForStudent = ({ route }) => {
                     );
                   })}
                 </View>
-              ))}
+              ))
+            ))}
 
-            <TouchableOpacity onPress={handleDietButton}>
-              <Text style={styles.continueButtonText}> תזונה </Text>
-            </TouchableOpacity>
-            {dietForShow &&
+          <TouchableOpacity
+            onPress={handleDietButton}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}> תזונה </Text>
+          </TouchableOpacity>
+
+          {dietForShow &&
+            (Object.entries(dietResult).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(dietResult).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
                   {data.map(({ date, diet, note }) => {
                     let label = diet;
-                    if (diet === "bed") {
-                      label = "לא טוב";
+                    if (diet === "sad") {
+                      label = "הערכה שלילית";
                     } else {
-                      label = "טוב";
+                      label = "הערכה חיובית";
                     }
                     return (
                       <Text key={date}>
@@ -901,25 +973,37 @@ const HistoryForStudent = ({ route }) => {
                     );
                   })}
                 </View>
-              ))}
+              ))
+            ))}
 
-            <TouchableOpacity onPress={handleAppearancesButton}>
-              <Text style={styles.continueButtonText}> נראות </Text>
-            </TouchableOpacity>
-            {appearancesForShow &&
+          <TouchableOpacity
+            onPress={handleAppearancesButton}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}> נראות </Text>
+          </TouchableOpacity>
+          {appearancesForShow &&
+            (Object.entries(appearancesResult).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(appearancesResult).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
                   {data.map(({ date, appearances, note }) => {
                     let label = appearances;
-                    if (appearances === "bed") {
-                      label = "לא טוב";
+                    if (appearances === "sad") {
+                      label = "הערכה שלילית ";
                     } else {
-                      label = "טוב";
+                      label = "הערכה חיובית ";
                     }
                     return (
                       <Text key={date}>
@@ -930,202 +1014,219 @@ const HistoryForStudent = ({ route }) => {
                     );
                   })}
                 </View>
-              ))}
+              ))
+            ))}
 
-            <TouchableOpacity onPress={handleEventsButton}>
-              <Text style={styles.continueButtonText}> אירועים מיוחדים </Text>
-            </TouchableOpacity>
-            {eventsForShow &&
+          <TouchableOpacity
+            onPress={handleEventsButton}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}> אירועים מיוחדים </Text>
+          </TouchableOpacity>
+          {eventsForShow &&
+            (Object.entries(eventsResult).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(eventsResult).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
                   {data.map(({ date, type, eventType, notes }) => {
                     let label = eventType;
                     if (eventType === "academicExcellence") {
-                      label = " הצטיינות לימודית";
+                      label = "  הצטיינות לימודית";
                     } else if (eventType === "associateHonors") {
                       label = " הצטיינות חברתית";
                     } else if (eventType === "Verbal violence") {
-                      label = " אלימות מילולית ";
+                      label = " אלימות מילולית";
                     } else if (eventType === "physical violence") {
-                      label = " אלימות פיזית ";
+                      label = " אלימות פיזית";
                     } else {
                       label = eventType;
                     }
                     return (
                       <Text key={date}>
-                        {`${date} -  ${label}${
+                        {`${date} - ${label}${
                           notes !== "" ? ` (${notes})` : ""
                         }`}
                       </Text>
                     );
                   })}
                 </View>
-              ))}
+              ))
+            ))}
 
-            <TouchableOpacity onPress={handleMyChoice1Button}>
-              <Text style={styles.continueButtonText}>{myChoice1} </Text>
-            </TouchableOpacity>
-            {myChoice1ForShow &&
-              icon1 == true &&
+          <TouchableOpacity
+            onPress={handleMyChoice1Button}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}>{myChoice1} </Text>
+          </TouchableOpacity>
+
+          {myChoice1ForShow &&
+            icon1 == true &&
+            (Object.entries(myChoice1Result).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(myChoice1Result).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
                   {data.map(({ date, myChoice, note }) => {
                     let label = myChoice;
-                    if (myChoice === "bed") {
-                      label = "לא טוב";
+                    if (myChoice === "sad") {
+                      label = " הערכה שלילית";
                     } else {
-                      label = "טוב";
+                      label = " הערכה חיובית";
                     }
                     return (
                       <Text key={date}>
-                        {`${date} -  ${label}${
-                          note !== "" ? ` (${note})` : ""
-                        }`}
+                        {`${date} - ${label}${note !== "" ? ` (${note})` : ""}`}
                       </Text>
                     );
                   })}
                 </View>
-              ))}
-            {myChoice1ForShow &&
-              icon1 === false &&
-              Object.values(myChoice1Result).map((data) => {
-                const hasNonEmptyChoice = data.some(
-                  ({ myChoice }) => myChoice !== ""
-                );
-                return (
-                  <View>
-                    {hasNonEmptyChoice ? (
-                      data.map(
-                        ({ date, myChoice }) =>
-                          myChoice !== "" && (
-                            <Text key={date}>{`${date} - ${
-                              myChoice ? `(${myChoice})` : ""
-                            }`}</Text>
-                          )
-                      )
-                    ) : (
-                      <Text>לא הוזן מידע עבור התלמיד בתאריכים אלו</Text>
-                    )}
-                  </View>
-                );
-              })}
+              ))
+            ))}
 
-            <TouchableOpacity onPress={handleMyChoice2Button}>
-              <Text style={styles.continueButtonText}>{myChoice2} </Text>
-            </TouchableOpacity>
-            {myChoice2ForShow &&
-              icon2 == true &&
+          {myChoice1ForShow &&
+            icon1 === false &&
+            Object.values(myChoice1Result).map((data) => {
+              const hasNonEmptyChoice = data.some(
+                ({ myChoice }) => myChoice !== ""
+              );
+              return (
+                <View key={data.date}>
+                  {hasNonEmptyChoice ? (
+                    data.map(
+                      ({ date, myChoice }) =>
+                        myChoice !== "" && (
+                          <Text key={date}>{`${date} - ${myChoice}`}</Text>
+                        )
+                    )
+                  ) : (
+                    <Text>אין דיווחים בתאריכים אלו </Text>
+                  )}
+                </View>
+              );
+            })}
+
+          <TouchableOpacity
+            onPress={handleMyChoice2Button}
+            style={[styles.button, { backgroundColor: "white" }]}
+          >
+            <Text style={styles.buttonText}>{myChoice2} </Text>
+          </TouchableOpacity>
+
+          {myChoice2ForShow &&
+            icon2 == true &&
+            (Object.entries(myChoice2Result).length === 0 ? (
+              <Text>אין דיווחים בתאריכים אלו </Text>
+            ) : (
               Object.entries(myChoice2Result).map(([courseName, data]) => (
                 <View key={courseName}>
                   <Text
-                    style={{ fontSize: 18, fontWeight: "bold", marginTop: 10 }}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "center",
+                      fontSize: 16,
+                      textDecorationLine: "underline",
+                    }}
                   >
                     {courseName}
                   </Text>
                   {data.map(({ date, myChoice, note }) => {
                     let label = myChoice;
-                    if (myChoice === "bed") {
-                      label = "לא טוב";
+                    if (myChoice === "sad") {
+                      label = "הערכה שלילית";
                     } else {
-                      label = "טוב";
+                      label = "הערכה חיובית ";
                     }
                     return (
                       <Text key={date}>
-                        {`${date} -  ${label}${
-                          note !== "" ? ` (${note})` : ""
-                        }`}
+                        {`${date} - ${label}${note !== "" ? ` (${note})` : ""}`}
                       </Text>
                     );
                   })}
                 </View>
-              ))}
-            {myChoice2ForShow &&
-              icon2 === false &&
-              Object.values(myChoice2Result).map((data) => {
-                const hasNonEmptyChoice = data.some(
-                  ({ myChoice }) => myChoice !== ""
-                );
-                return (
-                  <View>
-                    {hasNonEmptyChoice ? (
-                      data.map(
-                        ({ date, myChoice }) =>
-                          myChoice !== "" && (
-                            <Text key={date}>{`${date} - ${
-                              myChoice ? `(${myChoice})` : ""
-                            }`}</Text>
-                          )
-                      )
-                    ) : (
-                      <Text>לא הוזן מידע עבור התלמיד בתאריכים אלו</Text>
-                    )}
-                  </View>
-                );
-              })}
-          </View>
+              ))
+            ))}
+
+          {myChoice2ForShow &&
+            icon2 === false &&
+            Object.values(myChoice2Result).map((data) => {
+              const hasNonEmptyChoice = data.some(
+                ({ myChoice }) => myChoice !== ""
+              );
+              return (
+                <View key={data.date}>
+                  {hasNonEmptyChoice ? (
+                    data.map(
+                      ({ date, myChoice }) =>
+                        myChoice !== "" && (
+                          <Text key={date}>{`${date} - ${myChoice}`}</Text>
+                        )
+                    )
+                  ) : (
+                    <Text>אין דיווחים בתאריכים אלו </Text>
+                  )}
+                </View>
+              );
+            })}
         </View>
-      </View>
-    </ScrollView>
+        <Text>{"\n\n\n\n\n\n\n\n\n\n\n\n"}</Text>
+      </ScrollView>
+
+      <Navbar />
+    </View>
   );
 };
 
 export default HistoryForStudent;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
   input: {
     height: 40,
-    margin: 12,
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
-    borderRadius: 10,
-    borderColor: "gray",
+    width: 300,
+    backgroundColor: "white",
   },
-  button: {
-    alignItems: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: "white",
-  },
-  sectionHeader: {
-    paddingTop: 2,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 2,
-    fontSize: 14,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "bold",
-    backgroundColor: "rgba(247,247,247,1.0)",
+    textAlign: "center",
   },
+
   item: {
     padding: 10,
     fontSize: 18,
     height: 44,
   },
-  continueButtonText: {
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
   },
+
   dateItem: {
     alignItems: "center",
     justifyContent: "center",
@@ -1133,5 +1234,81 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 12,
     borderRadius: 10,
+  },
+  percentageData: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 20,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
   },
 });

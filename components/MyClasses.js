@@ -12,9 +12,7 @@ const MyClasses = () => {
   const navigation = useNavigation();
 
   const [data, setData] = useState([]);
-  const [ids, setIds] = useState([]);
   const [classesChanged, setClassesChanged] = useState(false);
-  const [classes, setClasses] = useState([]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -46,6 +44,7 @@ const MyClasses = () => {
         });
       }
     });
+
     classList.sort((a, b) => a.class_name.localeCompare(b.class_name));
     setData(classList);
   };
@@ -119,10 +118,9 @@ const MyClasses = () => {
       </View>
 
       <ScrollView style={styles.scrollContainer}>
-        {data.map((item) => (
+{data.sort((a, b) => a.class_name.localeCompare(b.class_name)).map((item) => (
           <View key={item.class_id} style={styles.itemContainer}>
             <TouchableOpacity
-              style={styles.iconContainer}
               onPress={() => handleDeleteClasses(item.class_id)}
             >
               <MaterialIcons name="delete" size={24} color="#AD8E70" />

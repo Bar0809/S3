@@ -3,20 +3,23 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   TextInput,
   ScrollView,
-  SectionList,
   Alert,
+  Image,
+  Dimensions,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import Toolbar from "./Toolbar";
+import React, { useState } from "react";
 import { collection, query, where, getDocs, getDoc, doc } from "firebase/firestore";
 import { db, auth } from "./firebase";
 import { Entypo } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
+import Navbar from "./Navbar";
+
+const { width } = Dimensions.get("window");
 
 const MoodsData = ({ route }) => {
-  const { category } = route.params;
+  const { className, classId, category } = route.params;
 
   const [startDateString, setStartDateString] = useState("");
   const [endDateString, setEndDateString] = useState("");
@@ -25,14 +28,15 @@ const MoodsData = ({ route }) => {
   const [validDate, setValidDate] = useState(false);
   const [validDateTwo, setValidDateTwo] = useState(false);
   const [dates, setDates] = useState([]);
-  const [displayBed, setDisplayBed] = useState([]);
+  const [displaySad, setDisplaySad] = useState([]);
   const [displayMedium, setDisplayMedium] = useState([]);
   const [mediumResult, setMediumResult] = useState([]);
-  const [bedResult, setBedResult] = useState([]);
+  const [sadResult, setSadResult] = useState([]);
   const [mediumIds, setMediumIds] = useState([]);
-  const [bedIds, setBedIds] = useState([]);
+  const [sadIds, setSadIds] = useState([]);
+  const [goodIds, setGoodIds] =useState([]);
   const [showMedium, setShowMedium] = useState(false);
-  const [showBed, setShowBed] = useState(false);
+  const [showSad, setShowSad] = useState(false);
   const [clickedDate, setClickedDate] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [percentageMedium, setPercentageMedium] = useState(0);
@@ -51,10 +55,9 @@ const MoodsData = ({ route }) => {
     }
 
     const day = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
+    const month = parseInt(match[2], 10) - 1; 
     const year = parseInt(match[3], 10);
 
-    // Check if the date is valid
     const date = new Date(year, month, day);
     if (
       date.getFullYear() !== year ||
@@ -64,21 +67,18 @@ const MoodsData = ({ route }) => {
       return false;
     }
 
-    // Check if the month is valid
     if (month > 11) {
       return false;
     }
 
-    // Check if the day is valid for the given month and year
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
     if (day > lastDayOfMonth) {
       return false;
     }
 
-    // Check if the date is within the desired range
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
-    if (date < minDate || date > currentDate) {
+    if (date < minDate || date >= currentDate) {
       Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return false;
     }
@@ -129,9 +129,14 @@ const MoodsData = ({ route }) => {
     const endDateTime = new Date(endDateISO);
 
     if (isNaN(startDateTime) || isNaN(endDateTime)) {
-      Alert.alert("Invalid date format");
+      Alert.alert("שגיאה בהכנסת הנתונים");
       return;
     }
+    if (startDateTime > endDateTime) {
+      Alert.alert("שגיאה", " שימו לב, הוכנס תאריך סיום קטן מתאריך ההתחלה  ");
+      return;
+    }
+
     let querySnapshot;
 
 
@@ -142,28 +147,39 @@ const MoodsData = ({ route }) => {
           categoryRef,
           where("date", ">=", startDateTime),
           where("date", "<=", endDateTime),
-          where("t_id", "==", auth.currentUser.uid)
+          where("t_id", "==", auth.currentUser.uid),
+          where ('class_id' , '==' , classId)
         );
 
         querySnapshot = await getDocs(q);
+        if (querySnapshot.docs.length === 0) {
+          Alert.alert("שגיאה", "אין דיווחים בתאריכים הללו");
+          return;
+        }
         const mediumIdst = [];
-        const bedIdst = [];
+        const sadIdst = [];
+        const goodIdst =[];
 
         if (category === "Mood") {
           querySnapshot.forEach((doc) => {
             if (doc.data().mood === "medium") {
               mediumIdst.push(doc.id);
-            } else if (doc.data().mood === "bed") {
-              bedIdst.push(doc.id);
+            } else if (doc.data().mood === "sad") {
+              sadIdst.push(doc.id);
+            }
+            else{
+              goodIdst.push(doc.id);
             }
           });
           setMediumIds(mediumIdst);
-          setBedIds(bedIdst);
+          setSadIds(sadIdst);
+          setGoodIds(goodIdst);
+          
 
           const moodsDates = [];
           await Promise.all(
             querySnapshot.docs.map(async (doc) => {
-              if (doc.data().mood === "medium" || doc.data().mood === "bed") {
+              if (doc.data().mood === "medium" || doc.data().mood === "sad" || doc.data().mood==='good') {
                 const docRef = doc.ref;
                 const docSnapshot = await getDoc(docRef);
                 const moodsValue = docSnapshot.data().date.toDate();
@@ -182,14 +198,13 @@ const MoodsData = ({ route }) => {
 
           setDates(moodsDates);
 
-          const classId = querySnapshot.docs[0].data().class_id;
           const classDoc = await getDoc(doc(db, "Classes", classId));
           const num = classDoc.data().numOfStudents || 1;
           setNumOfStudents(num);
           const days= countDays(startDate, endDate);
           const temp = (mediumIdst.length*100)/ (numOfStudents*days);
           setPercentageMedium(temp.toFixed(2));
-          const temp1 = (bedIdst.length*100)/ (numOfStudents*days);
+          const temp1 = (sadIdst.length*100)/ (numOfStudents*days);
           setPercentageSad(temp1.toFixed(2));
           setShow(true);
         } 
@@ -198,19 +213,25 @@ const MoodsData = ({ route }) => {
           querySnapshot.forEach((doc) => {
             if (doc.data().friendStatus === "medium") {
               mediumIdst.push(doc.id);
-            } else if (doc.data().friendStatus === "bed") {
-              bedIdst.push(doc.id);
+            } else if (doc.data().friendStatus === "sad") {
+              sadIdst.push(doc.id);
+            }
+            else{
+              goodIdst.push(doc.id);
             }
           });
           setMediumIds(mediumIdst);
-          setBedIds(bedIdst);
+          setSadIds(sadIdst);
+          setGoodIds(goodIdst);
 
           const moodsDates = [];
           await Promise.all(
             querySnapshot.docs.map(async (doc) => {
               if (
                 doc.data().friendStatus === "medium" ||
-                doc.data().friendStatus === "bed"
+                doc.data().friendStatus === "sad" || 
+                doc.data().friendStatus === "good" 
+
               ) {
                 const docRef = doc.ref;
                 const docSnapshot = await getDoc(docRef);
@@ -230,14 +251,13 @@ const MoodsData = ({ route }) => {
 
           setDates(moodsDates);
           
-          const classId = querySnapshot.docs[0].data().class_id;
           const classDoc = await getDoc(doc(db, "Classes", classId));
           const num = classDoc.data().numOfStudents || 1;
           setNumOfStudents(num);
           const days= countDays(startDate, endDate);
           const temp = (mediumIdst.length*100)/ (numOfStudents*days);
           setPercentageMedium(temp.toFixed(2));
-          const temp1 = (bedIdst.length*100)/ (numOfStudents*days);
+          const temp1 = (sadIdst.length*100)/ (numOfStudents*days);
           setPercentageSad(temp1.toFixed(2));
           setShow(true);
         }
@@ -257,7 +277,7 @@ const MoodsData = ({ route }) => {
 
     setClickedDate(clickedDate);
     setShowMedium(false);
-    setShowBed(false);
+    setShowSad(false);
 
     const dateParts = clickedDate.split("/");
     const dateObject = new Date(
@@ -266,7 +286,7 @@ const MoodsData = ({ route }) => {
     const timestamp = dateObject.getTime() / 1000;
 
     const mediumStudentsNames = [];
-    const bedStudentsNames = [];
+    const sadStudentsNames = [];
 
     try {
       const moodsRef = collection(db, category);
@@ -307,17 +327,17 @@ const MoodsData = ({ route }) => {
 
     try {
       const moodsRef = collection(db, category);
-      const bedQueries = bedIds.map((temp) =>
+      const sadQueries = sadIds.map((temp) =>
         query(moodsRef, where("__name__", "==", temp))
       );
-      const bedQuerySnapshots = await Promise.all(
-        bedQueries.map((q) => getDocs(q))
+      const sadQuerySnapshots = await Promise.all(
+        sadQueries.map((q) => getDocs(q))
       );
 
-      bedQuerySnapshots.forEach((querySnapshot) => {
+      sadQuerySnapshots.forEach((querySnapshot) => {
         querySnapshot.forEach((doc) => {
           if (timestamp === doc.data().date.seconds) {
-            bedStudentsNames.push([
+            sadStudentsNames.push([
               doc.data().student_name,
               doc.data().courseName,
               doc.data().note,
@@ -326,9 +346,9 @@ const MoodsData = ({ route }) => {
         });
       });
 
-      setDisplayBed(bedStudentsNames);
+      setDisplaySad(sadStudentsNames);
 
-      const result1 = displayBed.reduce((acc, [student, course, note]) => {
+      const result1 = displaySad.reduce((acc, [student, course, note]) => {
         if (!acc[course]) {
           acc[course] = [];
         }
@@ -336,70 +356,84 @@ const MoodsData = ({ route }) => {
         return acc;
       }, {});
 
-      setBedResult(result1);
-      setShowBed(true);
+      setSadResult(result1);
+      setShowSad(true);
     } catch (error) {
       Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
   };
 
   return (
+    <View style={styles.container}>
+    <View>
+      <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+    </View>
+
+    <View style={styles.title}>
+    {category === 'Mood' && (
+      <Text style={styles.pageTitle}>היסטוריית מצב רוח - {className}</Text>)}
+
+{category === 'FriendStatus' && (
+      <Text style={[styles.pageTitle, {fontSize:30}]}>היסטוריית מצב חברתי - {className}</Text>)}
+    </View>
+
+    <View>
+      <Text style={styles.subTitle}>מתאריך: </Text>
+      <TextInput
+        style={[styles.input, { textAlign: "right" }]}
+        value={startDateString}
+        onChangeText={handleChangeStartDate}
+        placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+      />
+      {startDateString && !validDate && (
+        <Text style={{ color: "red" }}>ערך לא תקין</Text>
+      )}
+
+      {validDate && <AntDesign name="check" size={24} color="green" />}
+    </View>
+
+    <View>
+      <Text style={styles.subTitle}>עד תאריך: </Text>
+      <TextInput
+        style={[styles.input, { textAlign: "right" }]}
+        value={endDateString}
+        onChangeText={handleChangeEndDate}
+        placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+      />
+
+      {endDateString && !validDateTwo && (
+        <Text style={{ color: "red" }}>ערך לא תקין</Text>
+      )}
+
+      {validDateTwo && <AntDesign name="check" size={24} color="green" />}
+    </View>
     <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
-      <View>
-        <View key={dates.length}>
-          <Toolbar />
-          <Text style={{ fontSize: 20, padding: 10 }}>היסטוריה </Text>
-          <View>
-            <Text>מתאריך: </Text>
-            <TextInput
-              style={[styles.input, { textAlign: "right" }]}
-              value={startDateString}
-              onChangeText={handleChangeStartDate}
-              placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-            />
-            {validDate ? (
-              <Text style={{ color: "green" }}>Correct date</Text>
-            ) : (
-              <Text style={{ color: "red" }}>Incorrect date</Text>
-            )}
-
-            <Text>עד תאריך: </Text>
-            <TextInput
-              style={[styles.input, { textAlign: "right" }]}
-              value={endDateString}
-              onChangeText={handleChangeEndDate}
-              placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-            />
-            {validDateTwo ? (
-              <Text style={{ color: "green" }}>Correct date</Text>
-            ) : (
-              <Text style={{ color: "red" }}>Incorrect date</Text>
-            )}
-
-            <TouchableOpacity onPress={handleExportData}>
-              <Text style={styles.continueButtonText}>הוצא נתונים</Text>
-            </TouchableOpacity>
-          </View>
+      <TouchableOpacity onPress={handleExportData} style={styles.button}>
+        <Text style={styles.buttonText}>הוצא נתונים</Text>
+      </TouchableOpacity>
 
           {dates.map((item) => (
-            <TouchableOpacity onPress={() => check(item)} key={item}>
-              <View style={styles.dateItem}>
-                <Text style={styles.dateText}>{item}</Text>
+            <View key={item}>
+            <TouchableOpacity onPress={() => check(item)} style={[styles.button, {backgroundColor:'white'}]}>
+              <View >
+                <Text style={styles.buttonText}>{item}</Text>
               </View>
+              </TouchableOpacity>
+
               {selectedDate === item && (
-                <View>
+                <View >
                   {Object.entries(mediumResult).length > 0 && (
-                    <View>
+                    <View style={{alignItems:'center'}}>
                       <Text></Text>
-                      <Entypo name="emoji-neutral" size={24} color="black" />
+                      <Entypo name="emoji-neutral" size={24} color="black" style={{alignItems:'center'}} />
                       {Object.entries(mediumResult).map(
                         ([courseName, students]) => (
                           <View key={courseName}>
-                            <Text style={{ fontWeight: "bold" }}>
+                            <Text style={{ fontWeight: "bold" , textAlign:'center' , fontSize:16, textDecorationLine:'underline'}}>
                               {courseName}
                             </Text>
                             {students.map((student, index) => (
-                              <Text key={`${student}-${index}`}>
+                              <Text key={`${student}-${index}`} style={{fontSize:16, textAlign:'center'}}>
                                 {student.student}{" "}
                                 {student.note ? `(${student.note})` : ""}
                               </Text>
@@ -410,18 +444,18 @@ const MoodsData = ({ route }) => {
                     </View>
                   )}
 
-                  {Object.entries(bedResult).length > 0 && (
-                    <View>
+                  {Object.entries(sadResult).length > 0 && (
+                    <View style={{alignItems:'center'}}>
                       <Text></Text>
                       <Entypo name="emoji-sad" size={24} color="black" />
-                      {Object.entries(bedResult).map(
+                      {Object.entries(sadResult).map(
                         ([courseName, students]) => (
                           <View key={courseName}>
-                            <Text style={{ fontWeight: "bold" }}>
+                            <Text style={{ fontWeight: "bold" , textAlign:'center' , fontSize:16, textDecorationLine:'underline'}}>
                               {courseName}
                             </Text>
                             {students.map((student, index) => (
-                              <Text key={`${student}-${index}`}>
+                              <Text style={{fontSize:16, textAlign:'center'}} key={`${student}-${index}`}>
                                 {student.student}{" "}
                                 {student.note ? `(${student.note})` : ""}
                               </Text>
@@ -429,11 +463,20 @@ const MoodsData = ({ route }) => {
                           </View>
                         )
                       )}
+                    </View>
+                  )}
+
+{Object.entries(sadResult).length === 0 &&
+                  Object.entries(mediumResult).length === 0 && (
+                    <View>
+                      <Text style={{ fontSize: 14, textAlign: "center" }}>
+                        כל התלמידים  בשיעור בתאריך זה קיבלו הערכה חיובית
+                      </Text>
                     </View>
                   )}
                 </View>
               )}
-            </TouchableOpacity>
+              </View>
           ))}
           {show === true && (
 
@@ -451,58 +494,43 @@ const MoodsData = ({ route }) => {
   </Text>
 </View>
 )}    
-        </View>
-      </View>
-    </ScrollView>
+       
+       <Text>{"\n\n\n\n\n\n"}</Text>
+      </ScrollView>
+
+      <Navbar />
+    </View>
   );
 };
 
 export default MoodsData;
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
   input: {
     height: 40,
-    margin: 12,
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
-    borderRadius: 10,
-    borderColor: "gray",
+    width: 300,
+    backgroundColor: "white",
   },
-  button: {
-    alignItems: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: "white",
-  },
-  sectionHeader: {
-    paddingTop: 2,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 2,
-    fontSize: 14,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "bold",
-    backgroundColor: "rgba(247,247,247,1.0)",
+    textAlign: "center",
   },
+
   item: {
     padding: 10,
     fontSize: 18,
     height: 44,
   },
-  continueButtonText: {
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
   },
+
   dateItem: {
     alignItems: "center",
     justifyContent: "center",
@@ -512,8 +540,79 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   percentageData: {
-    fontSize:18,
-    fontWeight:'bold',
+    fontSize: 18,
+    fontWeight: "bold",
+  },
 
-  }
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 20,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
+  },
 });

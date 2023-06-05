@@ -1,8 +1,13 @@
-import { View, Text , StyleSheet, TouchableOpacity, FlatList} from 'react-native'
+import {
+  View,
+  Text,
+  StyleSheet, Image,ScrollView,
+  TouchableOpacity,Dimensions
+} from "react-native";
 import React , { useState, useEffect } from 'react'
 import { MaterialIcons } from '@expo/vector-icons'; 
 import { useNavigation } from '@react-navigation/native';
-import Toolbar from './Toolbar';
+import Navbar from "./Navbar";
 import { FontAwesome } from '@expo/vector-icons'; 
 import { auth, db } from './firebase';
 import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
@@ -28,12 +33,22 @@ const StudentData = (props) => {
         classIds.push(classId);
       }
     });
-    setData(classNames);
-    setIds(classIds);
+
+    let classIdPairs = classNames.map((className, index) => {
+      return { className, id: classIds[index] };
+    });
+    
+    classIdPairs.sort((a, b) => a.className.localeCompare(b.className));
+    
+    classes = classIdPairs.map(pair => pair.className);
+    let IDS = classIdPairs.map(pair => pair.id);
+    setData(classes);
+    setIds(IDS);
+
+   
   };
 
 
-  console.log(ids);
   
 
   useEffect(() => {
@@ -41,47 +56,38 @@ const StudentData = (props) => {
   }, []);
   
 
-  const renderItem = ({ item, index }) => (
-    <View style={{ flexDirection: 'row' }}>
-      <TouchableOpacity onPress={() => navigation.navigate('ChooseStudentForHistory', { className: item, classId: ids[index] })}>
-        <Text style={{ padding: 10, fontSize: 22, textAlign: 'center', textDecorationLine: 'underline', flexDirection: 'column', justifyContent: 'center' }}>
-          {item}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-
   return (
-      <View tyle={styles.allPage}>
-          <Toolbar/>
+    <View style={styles.container}>
+    <View>
+      <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+    </View>
 
-          <View style={styles.title}>
-              <FontAwesome name="users" size={40} color="black" style={[{paddingLeft:-50}]}/>
-              <Text style={styles.pageTitle}>הכיתות שלי:</Text>
-          </View>
+    <View style={styles.title}>
+      <Text style={styles.pageTitle}> היסטוריה לפי תלמיד: </Text>
+    </View>
 
-          
+    <ScrollView style={styles.scrollContainer}>
+      <Text style={styles.subTitle}> בחר/י את הכיתה הרצויה</Text>
 
-          <Text style={styles.subTitle}> בחר/י את הכיתה הרצויה</Text>
-      
-          <View>
-              <FlatList
-          data={data}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => item + index}
-          contentContainerStyle={{ alignItems: 'center', position: 'relative'}}
-        />
-          </View>
-
-          <TouchableOpacity style={styles.back} onPress={() => navigation.navigate('HomePage')}>
-              <MaterialIcons name="navigate-next" size={24} color="black" />
-              <Text >הקודם</Text>
-              </TouchableOpacity>
-
-     </View>
+<View>
+ {data.map((item, index) => (
+  <View key={item + index} style={styles.itemContainer}>
+    <TouchableOpacity
+       onPress={() => navigation.navigate('ChooseStudentForHistory', { className: item, classId: ids[index] })}
+    >
+      <Text style={styles.itemText}>{item}</Text>
+    </TouchableOpacity>
+  </View>
+))}
 
 
+</View>
+
+    </ScrollView>
+
+    <Navbar />
+  </View>
+    
 
    )
  }
@@ -89,34 +95,53 @@ const StudentData = (props) => {
  export default StudentData 
 
 const styles=StyleSheet.create({
-allPage: {
-  flex:1,
-  alignItems: 'center',  
-},
-title: {
-  alignItems:'center',
-
-},
-pageTitle:{
- color:'black',
- fontSize:50,
- fontWeight:'bold',
-
-},
-back: {
-  padding:'40%',
-  alignItems:'center',
-
-},
-subTitle:{
-    color:'red',
-    fontWeight:'bold',
-    fontSize:18,
-    textAlign:'right'
-}
-
-
-  
-  }
-  );
-  
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse", 
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 24,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+});

@@ -3,21 +3,23 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   TextInput,
   ScrollView,
-  SectionList,
   Alert,
+  Image,
+  Dimensions,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
-import Toolbar from "./Toolbar";
+import React, { useState } from "react";
 import { collection, query, where, getDocs, getDoc, doc } from "firebase/firestore";
 import { db, auth } from "./firebase";
 import { Entypo } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
+import Navbar from "./Navbar";
+
+const { width } = Dimensions.get("window");
 
 const DietNAppearData = ({ route }) => {
-  const { category } = route.params;
+  const { className, classId, category } = route.params;
 
   const [startDateString, setStartDateString] = useState("");
   const [endDateString, setEndDateString] = useState("");
@@ -46,10 +48,9 @@ const DietNAppearData = ({ route }) => {
     }
 
     const day = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
+    const month = parseInt(match[2], 10) - 1; 
     const year = parseInt(match[3], 10);
 
-    // Check if the date is valid
     const date = new Date(year, month, day);
     if (
       date.getFullYear() !== year ||
@@ -59,21 +60,18 @@ const DietNAppearData = ({ route }) => {
       return false;
     }
 
-    // Check if the month is valid
     if (month > 11) {
       return false;
     }
 
-    // Check if the day is valid for the given month and year
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
     if (day > lastDayOfMonth) {
       return false;
     }
 
-    // Check if the date is within the desired range
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
-    if (date < minDate || date > currentDate) {
+    if (date < minDate || date >= currentDate) {
       Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return false;
     }
@@ -128,7 +126,12 @@ const DietNAppearData = ({ route }) => {
     const endDateTime = new Date(endDateISO);
 
     if (isNaN(startDateTime) || isNaN(endDateTime)) {
-      Alert.alert("Invalid date format");
+      Alert.alert("שגיאה בהכנסת הנתונים");
+      return;
+    }
+  
+    if (startDateTime > endDateTime) {
+      Alert.alert("שגיאה", " שימו לב, הוכנס תאריך סיום קטן מתאריך ההתחלה  ");
       return;
     }
     let querySnapshot;
@@ -140,7 +143,8 @@ const DietNAppearData = ({ route }) => {
           categoryRef,
           where("date", ">=", startDateTime),
           where("date", "<=", endDateTime),
-          where("t_id", "==", auth.currentUser.uid)
+          where("t_id", "==", auth.currentUser.uid),
+          where ('class_id' , '==' , classId)
         );
 
         querySnapshot = await getDocs(q);
@@ -148,9 +152,7 @@ const DietNAppearData = ({ route }) => {
 
         if (category === "Diet") {
           querySnapshot.forEach((doc) => {
-            if (doc.data().diet === "bed") {
               Idst.push(doc.id);
-            }
           });
 
           setIds(Idst);
@@ -158,7 +160,6 @@ const DietNAppearData = ({ route }) => {
           const tempDates = [];
           await Promise.all(
             querySnapshot.docs.map(async (doc) => {
-              if (doc.data().diet === "bed") {
                 const docRef = doc.ref;
                 const docSnapshot = await getDoc(docRef);
                 const moodsValue = docSnapshot.data().date.toDate();
@@ -171,13 +172,12 @@ const DietNAppearData = ({ route }) => {
                 if (!tempDates.includes(formattedDate)) {
                   tempDates.push(formattedDate);
                 }
-              }
+              
             })
           );
 
           setDates(tempDates);
 
-          const classId = querySnapshot.docs[0].data().class_id;
           const classDoc = await getDoc(doc(db, "Classes", classId));
           const num = classDoc.data().numOfStudents || 1;
           setNumOfStudents(num);
@@ -191,16 +191,14 @@ const DietNAppearData = ({ route }) => {
         
         else if (category === "Appearances") {
           querySnapshot.forEach((doc) => {
-            if (doc.data().appearances === "bed") {
               Idst.push(doc.id);
-            }
+            
           });
           setIds(Idst);
 
           const tempDates = [];
           await Promise.all(
             querySnapshot.docs.map(async (doc) => {
-              if (doc.data().appearances === "bed") {
                 const docRef = doc.ref;
                 const docSnapshot = await getDoc(docRef);
                 const moodsValue = docSnapshot.data().date.toDate();
@@ -213,13 +211,12 @@ const DietNAppearData = ({ route }) => {
                 if (!tempDates.includes(formattedDate)) {
                   tempDates.push(formattedDate);
                 }
-              }
+              
             })
           );
           setDates(tempDates);
 
        
-          const classId = querySnapshot.docs[0].data().class_id;
           const classDoc = await getDoc(doc(db, "Classes", classId));
           const num = classDoc.data().numOfStudents || 1;
           setNumOfStudents(num);
@@ -266,11 +263,21 @@ const DietNAppearData = ({ route }) => {
       querySnapshots.forEach((querySnapshot) => {
         querySnapshot.forEach((doc) => {
           if (timestamp === doc.data().date.seconds) {
-            names.push([
+            if(category==='Diet' && doc.data().diet==='sad'){
+                 names.push([
               doc.data().student_name,
               doc.data().courseName,
               doc.data().note,
-            ]);
+            ]); 
+            }
+        
+            if(category==='Appearances' && doc.data().appearances==='sad'){
+              names.push([
+           doc.data().student_name,
+           doc.data().courseName,
+           doc.data().note,
+         ]); 
+         }
           }
         });
       });
@@ -292,63 +299,78 @@ const DietNAppearData = ({ route }) => {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+   
+    <View style={styles.container}>
       <View>
-        <View key={dates.length}>
-          <Toolbar />
-          <Text style={{ fontSize: 20, padding: 10 }}>היסטוריה </Text>
-          <View>
-            <Text>מתאריך: </Text>
-            <TextInput
-              style={[styles.input, { textAlign: "right" }]}
-              value={startDateString}
-              onChangeText={handleChangeStartDate}
-              placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-            />
-            {validDate ? (
-              <Text style={{ color: "green" }}>Correct date</Text>
-            ) : (
-              <Text style={{ color: "red" }}>Incorrect date</Text>
-            )}
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+      </View>
 
-            <Text>עד תאריך: </Text>
-            <TextInput
-              style={[styles.input, { textAlign: "right" }]}
-              value={endDateString}
-              onChangeText={handleChangeEndDate}
-              placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-            />
-            {validDateTwo ? (
-              <Text style={{ color: "green" }}>Correct date</Text>
-            ) : (
-              <Text style={{ color: "red" }}>Incorrect date</Text>
-            )}
+      <View style={styles.title}>
+      {category === 'Diet' && (
+      <Text style={styles.pageTitle}>היסטוריית תזונה - {className}</Text>)}
 
-            <TouchableOpacity
-              onPress={handleExportData}
-            >
-              <Text style={styles.continueButtonText}>הוצא נתונים</Text>
-            </TouchableOpacity>
-          </View>
+{category === 'Appearances' && (
+      <Text style={[styles.pageTitle]}>היסטוריית נראות  - {className}</Text>)}
+      </View>
+
+      <View>
+        <Text style={styles.subTitle}>מתאריך: </Text>
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={startDateString}
+          onChangeText={handleChangeStartDate}
+          placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+        />
+        {startDateString && !validDate && (
+          <Text style={{ color: "red" }}>ערך לא תקין</Text>
+        )}
+
+        {validDate && <AntDesign name="check" size={24} color="green" />}
+      </View>
+
+      <View>
+        <Text style={styles.subTitle}>עד תאריך: </Text>
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={endDateString}
+          onChangeText={handleChangeEndDate}
+          placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+        />
+
+        {endDateString && !validDateTwo && (
+          <Text style={{ color: "red" }}>ערך לא תקין</Text>
+        )}
+
+        {validDateTwo && <AntDesign name="check" size={24} color="green" />}
+      </View>
+      <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+        <TouchableOpacity onPress={handleExportData} style={styles.button}>
+          <Text style={styles.buttonText}>הוצא נתונים</Text>
+        </TouchableOpacity>
+
+
           {dates.map((item) => (
-            <TouchableOpacity onPress={() => check(item)} key={item}>
-              <View style={styles.dateItem}>
-                <Text style={styles.dateText}>{item}</Text>
+            <View key={item}>
+            <TouchableOpacity onPress={() => check(item)} style={[styles.button , {backgroundColor: 'white'}]}>
+              <View >
+                <Text style={styles.buttonText}>{item}</Text>
               </View>
+              </TouchableOpacity>
+
               {selectedDate === item && (
                 <View>
                   {Object.entries(finalResult).length > 0 && (
-                    <View>
+                    <View style={{alignItems:'center'}}>
                       <Text></Text>
-                      <Entypo name="emoji-sad" size={24} color="black" />
+                      <Entypo name="emoji-sad" size={24} color="black"  />
                       {Object.entries(finalResult).map(
                         ([courseName, students]) => (
                           <View key={courseName}>
-                            <Text style={{ fontWeight: "bold" }}>
+                            <Text style={{ fontWeight: "bold", textAlign:'center', fontSize:16, textDecorationLine:'underline' }}>
                               {courseName}
                             </Text>
                             {students.map((student, index) => (
-                              <Text key={`${student}-${index}`}>
+                              <Text style={{fontSize:16, textAlign:'center'}}  key={`${student}-${index}`}>
                                 {student.student}{" "}
                                 {student.note ? `(${student.note})` : ""}
                               </Text>
@@ -358,9 +380,19 @@ const DietNAppearData = ({ route }) => {
                       )}
                     </View>
                   )}
+
+{Object.entries(finalResult).length === 0 && (
+                    <View>
+                      <Text style={{ fontSize: 14, textAlign: "center" }}>
+                        כל התלמידים  בשיעור בתאריך זה קיבלו הערכה חיובית
+                      </Text>
+                    </View>
+                  )}
                 </View>
+
+                
               )}
-            </TouchableOpacity>
+            </View>
 
           ))}
 
@@ -375,59 +407,43 @@ const DietNAppearData = ({ route }) => {
             </Text>
           </View>
   )}        
-        </View>
+      
+      <Text>{"\n\n\n\n\n\n"}</Text>
+      </ScrollView>
 
-      </View>
-    </ScrollView>
+      <Navbar />
+    </View>
   );
 };
 
 export default DietNAppearData;
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
   input: {
     height: 40,
-    margin: 12,
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
-    borderRadius: 10,
-    borderColor: "gray",
+    width: 300,
+    backgroundColor: "white",
   },
-  button: {
-    alignItems: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: "white",
-  },
-  sectionHeader: {
-    paddingTop: 2,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 2,
-    fontSize: 14,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "bold",
-    backgroundColor: "rgba(247,247,247,1.0)",
+    textAlign: "center",
   },
+
   item: {
     padding: 10,
     fontSize: 18,
     height: 44,
   },
-  continueButtonText: {
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
   },
+
   dateItem: {
     alignItems: "center",
     justifyContent: "center",
@@ -437,8 +453,79 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   percentageData: {
-    fontSize:18,
-    fontWeight:'bold',
+    fontSize: 18,
+    fontWeight: "bold",
+  },
 
-  }
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 20,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
+  },
 });

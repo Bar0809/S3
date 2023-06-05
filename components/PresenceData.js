@@ -3,15 +3,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   TextInput,
   ScrollView,
-  SectionList,
   Alert,
+  Image,
+  Dimensions,
 } from "react-native";
 import React, { useState, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
-import Toolbar from "./Toolbar";
 import {
   collection,
   query,
@@ -21,8 +19,14 @@ import {
   doc,
 } from "firebase/firestore";
 import { db, auth } from "./firebase";
+import { AntDesign } from "@expo/vector-icons";
+import Navbar from "./Navbar";
 
-const PresenceData = () => {
+const { width } = Dimensions.get("window");
+
+const PresenceData = ({ route }) => {
+  const { className, classId, category } = route.params;
+
   const [startDateString, setStartDateString] = useState("");
   const [endDateString, setEndDateString] = useState("");
   const [startDate, setStartDate] = useState(null);
@@ -32,6 +36,8 @@ const PresenceData = () => {
   const [presenceDates, setPresenceDates] = useState([]);
   const [lateIds, setLateIds] = useState([]);
   const [absentIds, setAbsentIds] = useState([]);
+  const [presentIds, setPresentIds] = useState([]);
+
   const [showLateStudents, setShowLateStudents] = useState(false);
   const [showAbsentStudents, setShowAbsentStudents] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -213,26 +219,39 @@ const PresenceData = () => {
     const endDateArray = endDateString.split("/");
     const endDateISO = `${endDateArray[2]}-${endDateArray[1]}-${endDateArray[0]}`;
     const endDateTime = new Date(endDateISO);
-
+  
     if (isNaN(startDateTime) || isNaN(endDateTime)) {
-      Alert.alert("Invalid date format");
+      Alert.alert("שגיאה בהכנסת הנתונים");
       return;
     }
+  
+    if (startDateTime > endDateTime) {
+      Alert.alert("שגיאה", " שימו לב, הוכנס תאריך סיום קטן מתאריך ההתחלה  ");
+      return;
+    }
+  
     let querySnapshot;
     if (startDate && endDate) {
       try {
         const lateIdst = [];
         const absentIdst = [];
-
+        const presentIdst = [];
+  
         const presenceRef = collection(db, "Presence");
+  
         const q = query(
           presenceRef,
           where("date", ">=", startDateTime),
           where("date", "<=", endDateTime),
-          where("t_id", "==", auth.currentUser.uid)
+          where("t_id", "==", auth.currentUser.uid),
+          where("class_id", "==", classId)
         );
         querySnapshot = await getDocs(q);
-
+        if (querySnapshot.docs.length === 0) {
+          Alert.alert("שגיאה", "אין דיווחים בתאריכים הללו");
+          return;
+        }
+  
         querySnapshot.forEach((doc) => {
           if (doc.data().presence === "late") {
             lateIdst.push(doc.id);
@@ -240,202 +259,237 @@ const PresenceData = () => {
           if (doc.data().presence === "absent") {
             absentIdst.push(doc.id);
           }
+          if (doc.data().presence === "present") {
+            presentIdst.push(doc.id);
+          }
         });
-
+  
         setAbsentIds(absentIdst);
         setLateIds(lateIdst);
-      } catch (error) {
-        Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
-      }
-
-      const dates = [];
-      await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
+        setPresentIds(presentIdst);
+  
+        const dates = [];
+        querySnapshot.docs.forEach(async (doc) => {
           const presence = doc.data().presence;
-          if (presence === "late" || presence === "absent") {
+          if (presence === "late" || presence === "absent" || presence === "present") {
             const docRef = doc.ref;
             const docSnapshot = await getDoc(docRef);
             const presenceValue = docSnapshot.data().date.toDate();
             const day = presenceValue.getDate().toString().padStart(2, "0");
-            const month = (presenceValue.getMonth() + 1)
-              .toString()
-              .padStart(2, "0");
+            const month = (presenceValue.getMonth() + 1).toString().padStart(2, "0");
             const year = presenceValue.getFullYear();
             const formattedDate = `${day}/${month}/${year}`;
-
+  
             if (!dates.includes(formattedDate)) {
               dates.push(formattedDate);
             }
           }
-        })
-      );
-      setPresenceDates(dates);
-      const classId = querySnapshot.docs[0].data().class_id;
-      const classDoc = await getDoc(doc(db, "Classes", classId));
-      const num = classDoc.data().numOfStudents || 1;
-      setNumOfStudents(num);
-      const days = countDays(startDate, endDate);
-      const temp = (lateIds.length * 100) / (numOfStudents * days);
-      setLatePercentage(temp.toFixed(2));
-      const temp1 = (absentIds.length * 100) / (numOfStudents * days);
-      setAbsentPercentage(temp1.toFixed(2));
-      setShow(true);
+        });
+  
+        setPresenceDates(dates);
+        const classDoc = await getDoc(doc(db, "Classes", classId));
+        const num = classDoc.data().numOfStudents || 1;
+        setNumOfStudents(num);
+  
+        const days = countDays(startDate, endDate);
+        const temp = (lateIds.length * 100) / (numOfStudents * days);
+        const temp1 = (absentIds.length * 100) / (numOfStudents * days);
+  
+        setLatePercentage(temp.toFixed(2));
+        setAbsentPercentage(temp1.toFixed(2));
+        setShow(true);
+      } catch (error) {
+        Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+      }
     }
   };
+  
+  
+  
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+    <View style={styles.container}>
       <View>
-        <View key={presenceDates.length}>
-          <Toolbar />
-          <Text style={{ fontSize: 20, padding: 10 }}>היסטוריית נוכחות: </Text>
-          <View>
-            <Text>מתאריך: </Text>
-            <TextInput
-              style={[styles.input, { textAlign: "right" }]}
-              value={startDateString}
-              onChangeText={handleChangeStartDate}
-              placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-            />
-            {validDate ? (
-              <Text style={{ color: "green" }}>Correct date</Text>
-            ) : (
-              <Text style={{ color: "red" }}>Incorrect date</Text>
-            )}
-
-            <Text>עד תאריך: </Text>
-            <TextInput
-              style={[styles.input, { textAlign: "right" }]}
-              value={endDateString}
-              onChangeText={handleChangeEndDate}
-              placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-            />
-            {validDateTwo ? (
-              <Text style={{ color: "green" }}>Correct date</Text>
-            ) : (
-              <Text style={{ color: "red" }}>Incorrect date</Text>
-            )}
-
-            <TouchableOpacity onPress={handleExportData}>
-              <Text style={styles.continueButtonText}>הוצא נתונים</Text>
-            </TouchableOpacity>
-          </View>
-
-          {presenceDates.map((item) => (
-            <TouchableOpacity onPress={() => check(item)} key={item}>
-              <View style={styles.dateItem}>
-                <Text style={styles.dateText}>{item}</Text>
-              </View>
-              {selectedDate === item && (
-                <View>
-                  {Object.entries(lateStudentsByCourse).length > 0 && (
-                    <View>
-                      <Text></Text>
-                      <Text style={styles.sectionTitle}>תלמידים מאחרים:</Text>
-                      {Object.entries(lateStudentsByCourse).map(
-                        ([courseName, students]) => (
-                          <View key={courseName}>
-                            <Text style={{ fontWeight: "bold" }}>
-                              {courseName}
-                            </Text>
-                            {students.map((item) => (
-                              <Text key={item}>{item}</Text>
-                            ))}
-                          </View>
-                        )
-                      )}
-                    </View>
-                  )}
-
-                  {Object.entries(absentStudentsByCourse).length > 0 && (
-                    <View>
-                      <Text></Text>
-                      <Text style={styles.sectionTitle}>תלמידים חסרים:</Text>
-                      {Object.entries(absentStudentsByCourse).map(
-                        ([courseName, students]) => (
-                          <View key={courseName}>
-                            <Text style={{ fontWeight: "bold" }}>
-                              {courseName}
-                            </Text>
-                            {students.map((item) => (
-                              <Text key={item}>{item}</Text>
-                            ))}
-                          </View>
-                        )
-                      )}
-                    </View>
-                  )}
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-
-          {show === true && (
-            <View>
-              <Text style={styles.percentageData}>
-                בטווח התאריכים הנ"ל ישנם
-                {latePercentage}% מאחרים
-              </Text>
-
-              <Text style={styles.percentageData}>
-                בטווח התאריכים הנ"ל ישנם
-                {absentPercentage}% מחסרים
-              </Text>
-            </View>
-          )}
-        </View>
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
       </View>
-    </ScrollView>
+
+      <View style={styles.title}>
+        <Text style={styles.pageTitle}>היסטוריית נוכחות - {className}</Text>
+      </View>
+
+      <View>
+        <Text style={styles.subTitle}>מתאריך: </Text>
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={startDateString}
+          onChangeText={handleChangeStartDate}
+          placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+        />
+        {startDateString && !validDate && (
+          <Text style={{ color: "red" }}>ערך לא תקין</Text>
+        )}
+
+        {validDate && <AntDesign name="check" size={24} color="green" />}
+      </View>
+
+      <View>
+        <Text style={styles.subTitle}>עד תאריך: </Text>
+        <TextInput
+          style={[styles.input, { textAlign: "right" }]}
+          value={endDateString}
+          onChangeText={handleChangeEndDate}
+          placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+        />
+
+        {endDateString && !validDateTwo && (
+          <Text style={{ color: "red" }}>ערך לא תקין</Text>
+        )}
+
+        {validDateTwo && <AntDesign name="check" size={24} color="green" />}
+      </View>
+      
+      <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+        <TouchableOpacity onPress={handleExportData} style={styles.button}>
+          <Text style={styles.buttonText}>הוצא נתונים</Text>
+        </TouchableOpacity>
+
+        {presenceDates.map((item) => (
+          <View key={item}>
+            <TouchableOpacity
+              onPress={() => check(item)}
+              style={[styles.button, { backgroundColor: "white" }]}
+            >
+              <View>
+                <Text style={styles.buttonText}>{item}</Text>
+              </View>
+            </TouchableOpacity>
+
+            {selectedDate === item && (
+              <View>
+                {Object.entries(lateStudentsByCourse).length > 0 && (
+                  <View>
+                    <Text></Text>
+                    <Text style={styles.sectionTitle}>תלמידים מאחרים:</Text>
+                    {Object.entries(lateStudentsByCourse).map(
+                      ([courseName, students]) => (
+                        <View key={courseName}>
+                          <Text
+                            style={{
+                              fontWeight: "bold",
+                              textAlign: "center",
+                              fontSize: 16,
+                              textDecorationLine: "underline",
+                            }}
+                          >
+                            {courseName}
+                          </Text>
+                          {students.map((item) => (
+                            <Text
+                              style={{ fontSize: 16, textAlign: "center" }}
+                              key={item}
+                            >
+                              {item}
+                            </Text>
+                          ))}
+                        </View>
+                      )
+                    )}
+                  </View>
+                )}
+
+                {Object.entries(absentStudentsByCourse).length > 0 && (
+                  <View>
+                    <Text></Text>
+                    <Text style={styles.sectionTitle}>תלמידים חסרים:</Text>
+                    {Object.entries(absentStudentsByCourse).map(
+                      ([courseName, students]) => (
+                        <View key={courseName}>
+                          <Text
+                            style={{
+                              fontWeight: "bold",
+                              textAlign: "center",
+                              fontSize: 16,
+                              textDecorationLine: "underline",
+                            }}
+                          >
+                            {courseName}
+                          </Text>
+                          {students.map((item) => (
+                            <Text
+                              style={{ fontSize: 16, textAlign: "center" }}
+                              key={item}
+                            >
+                              {item}
+                            </Text>
+                          ))}
+                        </View>
+                      )
+                    )}
+                  </View>
+                )}
+
+                {Object.entries(lateStudentsByCourse).length === 0 &&
+                  Object.entries(absentStudentsByCourse).length === 0 && (
+                    <View>
+                      <Text style={{ fontSize: 14, textAlign: "center" }}>
+                        כל התלמידים נכחו בשיעור בתאריך זה
+                      </Text>
+                    </View>
+                  )}
+              </View>
+            )}
+          </View>
+        ))}
+
+        {show === true && (
+          <View>
+            <Text style={styles.percentageData}>
+              בטווח התאריכים הנ"ל ישנם {latePercentage}% מאחרים
+            </Text>
+
+            <Text style={styles.percentageData}>
+              בטווח התאריכים הנ"ל ישנם {absentPercentage}% מחסרים
+            </Text>
+          </View>
+        )}
+
+        <Text>{"\n\n\n\n\n\n"}</Text>
+      </ScrollView>
+
+      <Navbar />
+    </View>
   );
 };
 
 export default PresenceData;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
   input: {
     height: 40,
-    margin: 12,
+    borderColor: "grey",
     borderWidth: 1,
     padding: 10,
-    borderRadius: 10,
-    borderColor: "gray",
+    width: 300,
+    backgroundColor: "white",
   },
-  button: {
-    alignItems: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: "white",
-  },
-  sectionHeader: {
-    paddingTop: 2,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingBottom: 2,
-    fontSize: 14,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "bold",
-    backgroundColor: "rgba(247,247,247,1.0)",
+    textAlign: "center",
   },
+
   item: {
     padding: 10,
     fontSize: 18,
     height: 44,
   },
-  continueButtonText: {
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4CAF50",
-    padding: 10,
-    margin: 12,
-    borderRadius: 10,
   },
+
   dateItem: {
     alignItems: "center",
     justifyContent: "center",
@@ -447,5 +501,77 @@ const styles = StyleSheet.create({
   percentageData: {
     fontSize: 18,
     fontWeight: "bold",
+  },
+
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 20,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
   },
 });

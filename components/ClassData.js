@@ -3,7 +3,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
+  Image,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -18,6 +18,8 @@ import {
   getDocs,
   deleteDoc,
 } from "firebase/firestore";
+import Navbar from "./Navbar";
+
 
 const ClassData = () => {
   const navigation = useNavigation();
@@ -43,8 +45,19 @@ const ClassData = () => {
         classIds.push(classId);
       }
     });
-    setData(classNames);
-    setIds(classIds);
+
+    
+    let classIdPairs = classNames.map((className, index) => {
+      return { className, id: classIds[index] };
+    });
+    
+    classIdPairs.sort((a, b) => a.className.localeCompare(b.className));
+    
+    classes = classIdPairs.map(pair => pair.className);
+    let IDS = classIdPairs.map(pair => pair.id);
+    setData(classes);
+    setIds(IDS);
+ 
   };
 
   useEffect(() => {
@@ -78,49 +91,58 @@ const ClassData = () => {
   );
 
   return (
-    <View tyle={styles.allPage}>
-      <Toolbar />
-
-      <Text style={styles.subTitle}>בחר/י את הכיתה הרצויה</Text>
-
-      <View>
-        <FlatList
-          data={data}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => item + index}
-          contentContainerStyle={{ alignItems: "center", position: "relative" }}
-        />
-      </View>
+    <View style={styles.container}>
+    <View>
+      <Image source={require("../assets/miniLogo-removebg-preview.png")} />
     </View>
+
+    <View style={styles.title}>
+    <Text style={[styles.pageTitle]}>היסטוריה לפי כיתה </Text>
+      </View>
+
+      <Text style={styles.subTitle}> בחר/י את הכיתה הרצויה</Text>
+
+      <View style={{ alignItems: "center", position: "relative" }}>
+      {data.map((item, index) => (
+        <React.Fragment key={item + index}>
+          {renderItem({ item, index })}
+        </React.Fragment>
+      ))}
+    </View>
+
+<Navbar/>
+    </View>
+
   );
 };
 
 export default ClassData;
 
 const styles = StyleSheet.create({
-  // allPage: {
-  //     flex: 1,
-  //     alignItems: 'center',
-  // },
-  // title: {
-  //     alignItems: 'center',
-  // },
-  // pageTitle: {
-  //     color: 'black',
-  //     fontSize: 50,
-  //     fontWeight: 'bold',
-  // },
-  // back: {
-  //     padding: '40%',
-  //     alignItems: 'center',
-  // },
-  // subTitle: {
-  //     color: 'red',
-  //     fontWeight: 'bold',
-  //     fontSize: 18,
-  //     textAlign: 'right'
-  // },
-  // temp: {
-  //     alignItems: 'center', position: 'relative'
-  // }
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 30,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+    textAlign:'center'
+  },
+  subTitle: {
+    fontSize: 24,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

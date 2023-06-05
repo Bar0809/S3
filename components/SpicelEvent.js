@@ -1,12 +1,14 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, Alert } from 'react-native'
-import React, { useState, useEffect, useRef } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Image,ScrollView, Dimensions} from 'react-native'
+import React, { useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import Toolbar from './Toolbar';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db, auth } from './firebase';
 import { RadioButton } from 'react-native-paper';
-import { Entypo } from '@expo/vector-icons';
+import Navbar from "./Navbar";
+import { AntDesign } from "@expo/vector-icons";
+
+
+const { width } = Dimensions.get('window');
 
 
 const SpicelEvent = ({ route }) => {
@@ -26,8 +28,6 @@ const SpicelEvent = ({ route }) => {
     const [dateString, setDateString] = useState('');
     const [validDate, setValidDate] = useState(false);
     const [other, setOther] = useState('');
-
-
 
     const handlePositiveSelection = (value) => {
         setEventType('positive');
@@ -54,7 +54,7 @@ const SpicelEvent = ({ route }) => {
 
     const handleCreateReport = async () => {
         if (!eventType) {
-            Alert.alert('Please select an event type');
+            Alert.alert('בחר/י סוג אירוע');
             return;
         }
 
@@ -67,7 +67,7 @@ const SpicelEvent = ({ route }) => {
         if (negativeType === 'other' || positiveType === 'other') {
             eventTypeText = other;
             if (!eventTypeText) {
-                Alert.alert('Please enter a value for "Other"');
+                Alert.alert('הכנס ערך עבור "אחר"');
                 return;
             }
         }
@@ -107,7 +107,6 @@ const SpicelEvent = ({ route }) => {
             navigation.navigate("HomePage");
         } catch (error) {
             Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
-            Alert.alert('Error creating report, please try again later');
         }
     };
 
@@ -120,30 +119,26 @@ const SpicelEvent = ({ route }) => {
         }
 
         const day = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
+        const month = parseInt(match[2], 10) - 1; 
         const year = parseInt(match[3], 10);
 
-        // Check if the date is valid
         const date = new Date(year, month, day);
         if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
             return null;
         }
 
-        // Check if the month is valid
         if (month > 11) {
             return null;
         }
 
-        // Check if the day is valid for the given month and year
         const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
         if (day > lastDayOfMonth) {
             return null;
         }
 
-        // Check if the date is within the desired range
         const currentDate = new Date();
         const minDate = new Date('2023-01-01');
-        if (date < minDate || date > currentDate) {
+        if (date < minDate || date >= currentDate) {
             Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
             return null;
         }
@@ -152,27 +147,33 @@ const SpicelEvent = ({ route }) => {
     }
 
     return (
-        <View>
-            <Toolbar />
-            <View style={styles.report}>
-                <Text style={{ fontSize: 20, padding: 10 }}> צור/י דיווח חדש</Text>
-                <Ionicons name="create-outline" size={24} color="black" />
-            </View>
+        <View style={styles.container}>
+      <View>
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+      </View>
 
-            <View style={styles.row}>
-                <Text style={[{ textAlign: 'right', fontSize: 20, fontWeight: 'bold' }]}>שם התלמיד/ה: </Text>
-                <Text style={[{ textAlign: 'right', fontSize: 20 }]}>{studentName}</Text>
-            </View>
+      <View style={styles.title}>
+      <Text style={[styles.pageTitle]}> אירועים מיוחדים {"\n"} {studentName} </Text>
+      </View>
 
-            <View>
-                <Text>תאריך</Text>
-                <TextInput style={[styles.input, { textAlign: 'right' }]} value={dateString} onChangeText={handleChangeText} placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)" />
-                {validDate ? (
-                    <Text style={{ color: 'green' }}>Correct date</Text>
-                ) : (
-                    <Text style={{ color: 'red' }}>Incorrect date</Text>
-                )}
-            </View>
+      <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+      <View style={styles.container}>
+        <View style={styles.row}>
+          <Text style={styles.subTitle}>תאריך</Text>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            value={dateString}
+            onChangeText={handleChangeText}
+            placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+          />
+          <Text>{"\n"}</Text>
+          {dateString && !validDate && (
+            <Text style={{ color: "red" }}>ערך לא תקין</Text>
+          )}
+        </View>
+        {validDate && <AntDesign name="check" size={24} color="green" />}
+      </View>
+           
 
 
             <Text style={[{ textAlign: 'right', fontSize: 20, fontWeight: 'bold' }]}>סוג האירוע: </Text>
@@ -189,7 +190,7 @@ const SpicelEvent = ({ route }) => {
 
             {eventType === 'positive' && (
                 <View>
-                    <Text style={styles.label}>בחר/י את האירוע הרלוונטי: </Text>
+                    <Text style={[{ textAlign: 'right', fontSize: 20, fontWeight: 'bold' }]}>{"\n"}בחר/י את האירוע הרלוונטי:</Text>
                     <View style={styles.radioContainer}>
                         <View style={styles.radioItem}>
                             <RadioButton.Android value="academicExcellence" status={positiveType === 'academicExcellence' ? 'checked' : 'unchecked'} onPress={() => handlePositiveSelection('Academic excellence')} />
@@ -207,18 +208,22 @@ const SpicelEvent = ({ route }) => {
                     {positiveType === 'other' && (
                         <View>
                             <Text style={styles.label}>סוג האירוע: </Text>
-                            <TextInput style={styles.input} onChangeText={handleOtherChange} />
+                            <TextInput style={styles.input} onChangeText={handleOtherChange} 
+                                        placeholder="הכנס/י סוג אירוע לבחירתך"
+                                        />
                         </View>
                     )}
                     <Text style={styles.label}>הערות: </Text>
-                    <TextInput style={styles.input} onChangeText={handleCommentChange} value={comment} />
+                    <TextInput style={styles.input} onChangeText={handleCommentChange} value={comment}
+                 placeholder="הכנס/י הערות- לא חובה" />
+
 
                 </View>
             )}
 
             {eventType === 'negative' && (
                 <View>
-                    <Text style={styles.label}>בחר/י את האירוע הרלוונטי:</Text>
+                    <Text style={[{ textAlign: 'right', fontSize: 20, fontWeight: 'bold' }]}>{"\n"}בחר/י את האירוע הרלוונטי:</Text>
                     <View style={styles.radioContainer}>
                         <View style={styles.radioItem}>
                             <RadioButton.Android value="Verbal violence" status={negativeType === 'Verbal violence' ? 'checked' : 'unchecked'} onPress={() => handleNegativeSelection('Verbal violence')} />
@@ -236,22 +241,31 @@ const SpicelEvent = ({ route }) => {
                     {negativeType === 'other' && (
                         <View>
                             <Text style={styles.label}>סוג האירוע: </Text>
-                            <TextInput style={styles.input} onChangeText={handleOtherChange} />
+                            <TextInput style={styles.input} onChangeText={handleOtherChange} 
+                        placeholder="הכנס/י סוג אירוע לבחירתך" />
                         </View>
                     )}
                     <Text style={styles.label}>הערות: </Text>
-                    <TextInput style={styles.input} onChangeText={handleCommentChange} value={comment} />
+                    <TextInput style={styles.input} onChangeText={handleCommentChange} value={comment}
+                                          placeholder="הכנס/י הערות- לא חובה" />
+
 
                 </View>
             )}
 
+            <TouchableOpacity style={styles.button} onPress={handleCreateReport}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Text style={styles.buttonText}> שלח/י דיווח</Text>
+        </View>
+      </TouchableOpacity>
+      <Text>{"\n\n\n\n\n\n"}</Text>
 
 
-            <TouchableOpacity style={[styles.butt]} onPress={handleCreateReport} >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
-                </View>
-            </TouchableOpacity>
+</ScrollView>
+
+
+
+      <Navbar/>
         </View>
     )
 }
@@ -260,45 +274,98 @@ export default SpicelEvent
 
 
 const styles = StyleSheet.create({
-    back: {
-        padding: '30%'
-    },
-
-    report: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        textAlign: 'right',
-        justifyContent: 'flex-end',
-    },
-    row: {
-        textAlign: 'right',
-        flexDirection: 'row-reverse',
-        alignItems: 'flex-end'
-    },
-    radioContainer: {
-        textAlign: 'right',
-        flexDirection: 'row-reverse',
-        // alignItems:'flex-end',
-        alignItems: 'center',
-
-    },
-    radioItem: {
-        padding: 10
-    },
-    input: {
+    name: {
+        fontWeight: "bold",
+        marginRight: 8,
+      },
+     
+      radioButtonContainer: {
+        flexDirection: "row",
+        justifyContent: "space-around",
+        alignItems: "center",
+        marginRight: 16,
+      },
+     
+      input: {
         height: 40,
-        borderColor: 'grey',
+        borderColor: "grey",
         borderWidth: 1,
         padding: 10,
         width: 300,
-        backgroundColor: 'white'
-    },
-    butt: {
-        backgroundColor: '#90EE90',
+        backgroundColor: "white",
+      },
+      inputFreeText: {
+        height: 40,
+        borderColor: "grey",
+        borderWidth: 1,
         padding: 10,
-        borderRadius: 5,
-        marginTop: 20,
-        width: 100
-    },
-});
+        width: 120,
+        backgroundColor: "white",
+      },
+      container: {
+        flex: 1,
+        backgroundColor: "#F2E3DB",
+        alignItems: "center",
+        justifyContent: "center",
+      },
+      scrollContainer: {
+        flex: 1,
+        width: "100%",
+      },
+    
+      title: {
+        flexDirection: "row",
+        justifyContent: "space-around",
+        alignItems: "center",
+      },
+      pageTitle: {
+        color: "#AD8E70",
+        fontSize: 34,
+        fontWeight: "bold",
+        padding: 10,
+        textShadowColor: "rgba(0, 0, 0, 0.25)",
+        textShadowOffset: { width: 2, height: 2 },
+        textShadowRadius: 2,
+        textAlign: 'center'
+      },
+      subTitle: {
+        fontSize: 24,
+        textAlign: "right",
+        fontWeight: "bold",
+      },
+      button: {
+        width: width * 0.4,
+        height: 65,
+        justifyContent: "center",
+        backgroundColor: "#F1DEC9",
+        borderWidth: 2,
+        borderColor: "#F1DEC9",
+        alignItems: "center",
+        marginHorizontal: 10,
+        marginVertical: 10,
+        borderRadius: 15,
+        alignSelf: "center",
+        ...Platform.select({
+          ios: {
+            shadowColor: "rgba(0, 0, 0, 0.25)",
+            shadowOffset: { width: 2, height: 2 },
+            shadowOpacity: 1,
+            shadowRadius: 2,
+          },
+          android: {
+            elevation: 5,
+          },
+        }),
+      },
+      buttonText: {
+        fontSize: 24,
+        color: "#AD8E70",
+      },
+    radioContainer:{
+        flexDirection: "row",
+        justifyContent: "space-around",
+        alignItems: "center",
 
+    }
+    });
+    

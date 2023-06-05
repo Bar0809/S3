@@ -2,10 +2,12 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  TextInput,
   TouchableOpacity,
+  TextInput,
+  ScrollView,
   Alert,
+  Image,
+  Dimensions,
 } from "react-native";
 import React, { useState } from "react";
 import { auth, db } from "./firebase";
@@ -13,6 +15,9 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { doc, setDoc } from "firebase/firestore";
 import SetDetails from "./SetDetails";
+
+const { width } = Dimensions.get("window");
+
 
 const SignUp = () => {
   const navigation = useNavigation();
@@ -59,7 +64,7 @@ const SignUp = () => {
     setPasswordError(
       passwordIsValid
         ? null
-        : "Password must contain at least 8 characters, including uppercase and lowercase letters, and at least one digit"
+        : "הסיסמא חייבת להכיל לפחות 8 תווים המכילים אותיות קטנות, גדולות וספרה אחת לפחות."
     );
     setFirstNameError(
       firstNameIsValid ? null : "שם פרטי צריך להכיל לפחות 2 תווים"
@@ -71,7 +76,7 @@ const SignUp = () => {
       schoolNameIsValid ? null : "שם ביהס צריך להכיל לפחות 2 תווים"
     );
     setRepeatPasswordError(
-      repeatPasswordIsValid ? null : "Passwords do not match"
+      repeatPasswordIsValid ? null : "הסיסמא אינה תואמת, נסה/י שנית"
     );
 
     if (
@@ -100,14 +105,23 @@ const SignUp = () => {
           Alert.alert("אירעה שגיאה בלתי צפויה", e.message);
         });
     } else {
-      // If any of the input fields contain an error, do not reset any fields
-      // and let the user correct the errors
+      
     }
   };
 
   return (
-    <View style={styles.all}>
-      <Text style={styles.title}>צור משתמש: </Text>
+    <View style={styles.container}>
+    <View>
+      <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+    </View>
+
+    <View style={styles.title}>
+      <Text style={styles.pageTitle}> יצירת משתמש חדש</Text>
+
+    </View>
+    
+    <Text>{"\n"}</Text>
+
       <TextInput
         style={[styles.input, { textAlign: "right" }]}
         placeholder=' הכנס/י דוא"ל'
@@ -115,9 +129,10 @@ const SignUp = () => {
         onChangeText={(text) => setEmail(text)}
       ></TextInput>
       {emailError && <Text style={styles.errorMessage}>{emailError}</Text>}
+     
       <TextInput
-        style={[styles.input, { textAlign: "right", marginBottom: 20 }]}
-        placeholder="  שם פרטי:"
+        style={[styles.input, { textAlign: "right" }]}
+        placeholder="הכנס/י שם פרטי "
         value={firstName}
         onChangeText={(text) => setFirstName(text)}
       ></TextInput>
@@ -125,8 +140,8 @@ const SignUp = () => {
         <Text style={styles.errorMessage}>{firstNameError}</Text>
       )}
       <TextInput
-        style={[styles.input, { textAlign: "right", marginBottom: 20 }]}
-        placeholder=" שם משפחה:"
+        style={[styles.input, { textAlign: "right" }]}
+        placeholder=" הכנס/י שם משפחה"
         value={lastName}
         onChangeText={(text) => setLastName(text)}
       ></TextInput>
@@ -134,8 +149,8 @@ const SignUp = () => {
         <Text style={styles.errorMessage}>{lastNameError}</Text>
       )}
       <TextInput
-        style={[styles.input, { textAlign: "right", marginBottom: 20 }]}
-        placeholder=' שם ביה"ס:'
+        style={[styles.input, { textAlign: "right" }]}
+        placeholder=' הכנס/י שם ביה"ס בו את/ה מלמד/ת'
         value={schoolName}
         onChangeText={(text) => setSchoolName(text)}
       ></TextInput>
@@ -163,62 +178,81 @@ const SignUp = () => {
         <Text style={styles.errorMessage}>{repeatPasswordError}</Text>
       )}
 
-      <View style={styles.butt}>
-        <TouchableOpacity style={styles.signup} onPress={handleSignUp}>
-          <Text style={styles.text}>יצירת חשבון</Text>
+      <View >
+        <Text>{"\n"}</Text>
+        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+          <Text style={styles.buttonText}>יצירת חשבון</Text>
         </TouchableOpacity>
+      </View>
+
+
         <TouchableOpacity
           style={styles.back}
           onPress={() => navigation.navigate("FullLogin")}
         >
           <Text style={styles.text}>חזור למסך ההתחברות</Text>
         </TouchableOpacity>
-      </View>
     </View>
   );
 };
 export default SignUp;
 
 const styles = StyleSheet.create({
-  butt: {
-    alignItems: "center",
-  },
-  title: {
-    padding: 40,
-    fontSize: 35,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
   input: {
-    backgroundColor: "white",
-    width: "100%",
-    height: "6%",
-    borderColor: "#e8e8e8",
+    height: 45,
+    borderColor: "grey",
     borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizintal: 10,
-    marginVertical: 8,
+    padding: 10,
+    width: 300,
+    backgroundColor: "white",
+    marginBottom:10
   },
-  signup: {
-    backgroundColor: "#87CEFA",
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
     alignItems: "center",
-    borderRadius: 200,
-    padding: 25,
-    width: "50%",
-    top: 20,
   },
-  back: {
-    color: "gray",
+
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     alignItems: "center",
-    padding: 30,
-    width: "50%",
-    top: 20,
   },
-  text: {
-    color: "grey",
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 36,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
   },
-  error: {
-    color: "red",
-    fontSize: 12,
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
   },
 });

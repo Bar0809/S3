@@ -1,24 +1,22 @@
 import {
   View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
+  Text,ScrollView,
+  StyleSheet, Image,
+  TouchableOpacity,Dimensions
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
-import Toolbar from "./Toolbar";
+import Navbar from "./Navbar";
 import { FontAwesome } from "@expo/vector-icons";
-import { useRoute } from "@react-navigation/native";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
+
+const { width } = Dimensions.get('window');
 
 const ChooseCourse = ({ route }) => {
   const { reported, className, classId } = route.params;
-
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [courses, setCourses] = useState([]);
   const navigation = useNavigation();
+  const [courses, setCourses] = useState([]);
 
   function handleButtonClick(item) {
     if (reported === "Scores") {
@@ -100,15 +98,18 @@ const ChooseCourse = ({ route }) => {
     const getCourses = async () => {
       const q = query(
         collection(db, "Courses"),
-        where("class_id", "==", classId)
+        where("class_id", "==", classId),
+        where("t_id", "==", auth.currentUser.uid)
       );
       const querySnapshot = await getDocs(q);
+     
       const courses = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         type: "courses",
         ...doc.data(),
       }));
       setCourses(courses);
+    
     };
     getCourses();
   }, [className]);
@@ -116,8 +117,6 @@ const ChooseCourse = ({ route }) => {
   const renderItem = ({ item }) => {
     return (
       <View style={styles.listItem}>
-        {/* <TouchableOpacity disabled={!selectedCourse} onPress={() => handleButtonClick(item)}> */}
-
         <TouchableOpacity onPress={() => handleButtonClick(item)}>
           <Text style={styles.courseName}>{item.course_name}</Text>
         </TouchableOpacity>
@@ -126,23 +125,35 @@ const ChooseCourse = ({ route }) => {
   };
 
   return (
+    <View style={styles.container}>
     <View>
-      <Toolbar />
-      <View style={styles.title}>
-        <Text style={styles.pageTitle}>{className}</Text>
-        <FontAwesome
-          name="users"
-          size={30}
-          color="black"
-          style={[{ paddingLeft: -50 }]}
-        />
+      <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+    </View>
+
+    <View style={styles.title}>
+    <Text style={[styles.pageTitle]}>{className}- מקצועות לימוד</Text>
       </View>
-      <Text style={styles.subTitle}>בחר/י את המקצוע הרצוי</Text>
-      <FlatList
-        data={courses}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-      />
+
+      <ScrollView style={styles.scrollContainer}>
+      <Text style={styles.subTitle}> בחר/י את המקצוע הרצוי</Text>
+<View>
+  
+  {courses.map((item) => (
+    <TouchableOpacity
+      key={item.id}
+      onPress={() =>
+        handleButtonClick(item)
+      }
+    >
+      <View style={styles.itemContainer}>
+        <Text style={styles.itemText}>{item.course_name}</Text>
+      </View>
+    </TouchableOpacity>
+  ))}
+</View>
+</ScrollView>
+<Navbar/>
+      
     </View>
   );
 };
@@ -150,48 +161,48 @@ const ChooseCourse = ({ route }) => {
 export default ChooseCourse;
 
 const styles = StyleSheet.create({
-  listItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
     alignItems: "center",
-    backgroundColor: "#FFF",
-    height: 70,
-    borderRadius: 10,
-    marginTop: 10,
-    padding: 10,
-  },
-  courseName: {
-    fontSize: 18,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  removeButton: {
-    color: "red",
-  },
-  title: {
-    flexDirection: "row",
     justifyContent: "center",
   },
-  allPage: {
+  scrollContainer: {
     flex: 1,
-    alignItems: "center",
+    width: "100%",
   },
-  title: {
+  itemContainer: {
+    flexDirection: "row-reverse", 
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+   title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     alignItems: "center",
   },
   pageTitle: {
-    color: "black",
-    fontSize: 50,
+    color: "#AD8E70",
+    fontSize: 36,
     fontWeight: "bold",
-  },
-  back: {
-    padding: "40%",
-    alignItems: "center",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
   },
   subTitle: {
-    color: "red",
-    fontWeight: "bold",
-    fontSize: 18,
+    fontSize: 24,
     textAlign: "right",
+    fontWeight: "bold",
   },
 });

@@ -7,19 +7,30 @@ import {
   Image,
   Alert,
   Modal,
+  Dimensions,
   KeyboardAvoidingView,
+  ScrollView,
 } from "react-native";
 import React, { useState, useEffect } from "react";
-import Toolbar from "./Toolbar";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "./firebase";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { collection, query, where, getDocs, addDoc, updateDoc, doc} from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 import XLSX from "xlsx";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import { AntDesign } from "@expo/vector-icons";
+
+const { width } = Dimensions.get("window");
 
 const SetDetails = () => {
   const navigation = useNavigation();
@@ -33,14 +44,15 @@ const SetDetails = () => {
   const [isBlueBackground, setIsBlueBackground] = useState(false);
   const [uploadText, setUploadText] = useState("");
   const [counter, setCounter] = useState(0);
-
+  const [homePage, setHomePage] = useState("false");
+  const [class_id , setClass_id] = useState ('')
 
   const handleNumInputsChange = (value) => {
     if (value > 0) {
       setNumInputs(value);
       setInputValues(Array.from({ length: value }).map(() => ""));
     } else {
-      Alert.alert("Invalid input", "עלייך להזין לפחות מקצוע אחד", [
+      Alert.alert(" שגיאה", "עלייך להזין לפחות מקצוע אחד", [
         {
           text: "OK",
           onPress: () => setNumInputs(0),
@@ -72,12 +84,13 @@ const SetDetails = () => {
         }
       });
       setDocumentIds(names);
+      setHomePage(true);
     }
   }
 
   useEffect(() => {
     getDocuments();
-  }, []);
+  }, [documentIds]);
 
   const handlePress = () => {
     setShowContent(!showContent);
@@ -104,17 +117,13 @@ const SetDetails = () => {
 
       // check if className already exists in documentIds
       if (documentIds.includes(className)) {
-        Alert.alert(
-          "Class already exists",
-          "This class name already exists, please choose a different name.",
-          [
-            {
-              text: "OK",
-              onPress: () => {},
-              style: "cancel",
-            },
-          ]
-        );
+        Alert.alert("שגיאה", "שם הכיתה כבר תפוס, נסה/י שם אחר", [
+          {
+            text: "אוקיי",
+            onPress: () => {},
+            style: "cancel",
+          },
+        ]);
         return;
       }
 
@@ -125,6 +134,7 @@ const SetDetails = () => {
 
       const classRef = await addDoc(classesCollectionRef, classDoc);
       const classId = classRef.id;
+      setClass_id(classId)
 
       const courses = inputValues.map((courseName) => {
         const courseDoc = {
@@ -152,11 +162,11 @@ const SetDetails = () => {
 
         if (studentNames.includes(cellValue)) {
           Alert.alert(
-            "Duplicate student",
-            `Student "${cellValue}" already exists in the class.`,
+            " שגיאה",
+            ` "${cellValue}" כבר קיים בכיתה הזאת. התלמיד/ה `,
             [
               {
-                text: "OK",
+                text: "אוקיי",
                 onPress: () => {},
                 style: "cancel",
               },
@@ -172,14 +182,13 @@ const SetDetails = () => {
           };
 
           const promise = addDoc(studentsCollectionRef, studentDoc)
-          .then((docRef) => {
-            setCounter((prevCounter) => prevCounter + 1);
-            // console.log("Student document successfully written!------>" + studentDoc.student_name);
-          })
-          .catch((error) => {
-            Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
-          });
-        studentPromises.push(promise);
+            .then((docRef) => {
+              setCounter((prevCounter) => prevCounter + 1);
+            })
+            .catch((error) => {
+              Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+            });
+          studentPromises.push(promise);
         }
 
         rowIndex++;
@@ -191,87 +200,84 @@ const SetDetails = () => {
       };
       await updateDoc(doc(classesCollectionRef, classId), classDocUpdate);
 
-
-      Alert.alert("Success", "Data added successfully!", [
+      Alert.alert("", "המידע עודכן בהצלחה", [
         {
-          text: "OK",
+          text: "אוקיי",
           onPress: () => setShowContent(false),
           style: "cancel",
         },
       ]);
-    } 
-    
-    catch (error) {
+    } catch (error) {
       console.log("File upload error:", error);
-      Alert.alert("Error", "An error occurred while uploading the file: " + error.message, [
-        {
-          text: "OK",
-          onPress: () => {},
-          style: "cancel",
-        },
-      ]);
+      Alert.alert(
+        "Error",
+        "An error occurred while uploading the file: " + error.message,
+        [
+          {
+            text: "OK",
+            onPress: () => {},
+            style: "cancel",
+          },
+        ]
+      );
     }
 
-    
     const collectionRef = collection(db, "TrafficLights");
     const lightsDoc = {
-       t_id: auth.currentUser.uid,
-        G_presence_late: 5,
-        G_presence_absent: 10,
-        G_presence: 85,
-        O_presence_late: 10,
-        O_presence_absent: 15,
-        O_presence: 75,
-        G_appearances_p: 90,
-        G_appearances_n: 10,
-        O_appearances_p: 80,
-        O_appearances_n: 20,
-        G_diet_p: 90,
-        G_diet_n: 10,
-        O_diet_p: 80,
-        O_diet_n: 20,
-        G_events: 0,
-        O_events: 1,
-        G_friendStatus_n: 5,
-        G_friendStatus_m: 10,
-        G_friendStatus_p: 85,
-        O_friendStatus_n: 10,
-        O_friendStatus_m: 15,
-        O_friendStatus_p: 75,
-        G_mood_n: 5,
-        G_mood_m: 10,
-        G_mood_p: 85,
-        O_mood_n: 10,
-        O_mood_m: 15,
-        O_mood_p: 75,
+      t_id: auth.currentUser.uid,
+      G_presence_late: 5,
+      G_presence_absent: 10,
+      G_presence: 85,
+      O_presence_late: 10,
+      O_presence_absent: 15,
+      O_presence: 75,
+      G_appearances_p: 90,
+      G_appearances_n: 10,
+      O_appearances_p: 80,
+      O_appearances_n: 20,
+      G_diet_p: 90,
+      G_diet_n: 10,
+      O_diet_p: 80,
+      O_diet_n: 20,
+      G_events: 0,
+      O_events: 1,
+      G_friendStatus_n: 5,
+      G_friendStatus_m: 10,
+      G_friendStatus_p: 85,
+      O_friendStatus_n: 10,
+      O_friendStatus_m: 15,
+      O_friendStatus_p: 75,
+      G_mood_n: 5,
+      G_mood_m: 10,
+      G_mood_p: 85,
+      O_mood_n: 10,
+      O_mood_m: 15,
+      O_mood_p: 75,
     };
 
-    const promise = addDoc(collectionRef, lightsDoc)
+    const promise = addDoc(collectionRef, lightsDoc);
 
     const collectionRef_ = collection(db, "Colors");
     const colorsDoc = {
-       t_id: auth.currentUser.uid,
-       class_id: classId,
-       class_color: 'green',
-       class_description: ''
+      t_id: auth.currentUser.uid,
+      class_id: class_id,
+      class_color: "green",
+      class_description: "",
     };
 
     const p = addDoc(collectionRef_, colorsDoc)
-
-
-    .then(() => {
-      Alert.alert('Success', 'Data has been successfully updated');
-    })
-          .catch((error) => {
-            Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
-          });
+      .then(() => {
+      })
+      .catch((error) => {
+        Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
+      });
   };
 
   const pickDocument = async () => {
     try {
       let result = await DocumentPicker.getDocumentAsync({});
       setFileResponse(result);
-      setUploadText("File uploaded successfully!");
+      setUploadText("הקובץ הועלה בהצלחה");
     } catch (error) {
       Alert.alert("אירעה שגיאה בלתי צפויה", error.message);
     }
@@ -289,14 +295,23 @@ const SetDetails = () => {
     if (documentIds.length > 0) {
       navigation.navigate("HomePage");
     } else {
-      Alert.alert("Error", "There are no classes in the list.");
+      Alert.alert("שגיאה", ",אין כיתות ברשימה");
     }
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-      <View style={styles.mainView}>
-        <Toolbar />
+
+    <View style={styles.container}>
+      <View>
+        <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+      </View>
+
+      <View style={styles.title}>
+        <Text style={[styles.pageTitle, { textAlign: "center" }]}>
+          יצירת כיתות
+        </Text>
+      </View>
+      <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
         <View style={styles.mainView}>
           <Text
             style={[
@@ -310,7 +325,6 @@ const SetDetails = () => {
           >
             רשימת הכיתות שלי:{" "}
           </Text>
-
           {documentIds.length > 0 ? (
             <View>
               {documentIds.sort().map((name) => (
@@ -320,19 +334,18 @@ const SetDetails = () => {
           ) : (
             <Text>אין כרגע כיתות ברשימה</Text>
           )}
-
           <View
             style={[
               styles.container,
               isBlueBackground && styles.blueBackground,
             ]}
           >
-            <TouchableOpacity style={styles.button} onPress={handlePress}>
+            <TouchableOpacity style={[styles.button, { backgroundColor: "white" }]} onPress={handlePress}>
               <MaterialCommunityIcons
                 style={styles.icon}
                 name="plus"
                 size={24}
-                color="black"
+                color="#AD8E70"
               />
               <Text style={styles.buttonText}>הוסף כיתה</Text>
             </TouchableOpacity>
@@ -392,12 +405,12 @@ const SetDetails = () => {
                 />
 
                 <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => pickDocument()}
+style={[styles.button, { backgroundColor: "white" }]}      
+            onPress={() => pickDocument()}
                 >
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <AntDesign name="addfile" size={24} color="black" />
-                    <Text style={{ marginLeft: 5 }}>בחר/י קובץ</Text>
+                    <AntDesign name="addfile" size={24} color="#AD8E70" />
+                    <Text style={styles.buttonText}>בחר/י קובץ</Text>
                   </View>
                 </TouchableOpacity>
                 {fileResponse && (
@@ -436,39 +449,91 @@ const SetDetails = () => {
                   )}
                 </View>
                 <TouchableOpacity
-                  style={styles.butt}
+                  style={[styles.button]}
                   onPress={() => readExcelFile()}
                 >
                   <Ionicons
                     style={styles.icon}
                     name="create-outline"
                     size={24}
-                    color="black"
+                    color="#AD8E70"
                   />
-                  <Text>יצירת כיתה </Text>
+                  <Text style={styles.buttonText}>יצירת כיתה </Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
 
-          <TouchableOpacity onPress={navigateToHomePage}>
-            <AntDesign
-              style={styles.icon}
-              name="home"
-              size={24}
-              color="black"
-            />
-            <Text>דף הבית</Text>
-          </TouchableOpacity>
+          {homePage === true && (
+  <TouchableOpacity
+    onPress={navigateToHomePage}
+  >
+    <AntDesign
+      style={styles.icon}
+      name="home"
+      size={24}
+      color="#AD8E70"
+    />
+    <Text style={ { textAlign: "center"}}>דף הבית</Text>
+  </TouchableOpacity>
+          )}
+
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </ScrollView>
+    </View>
   );
 };
 
 export default SetDetails;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 46,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
+  },
   mainView: {
     alignItems: "center",
     flex: 1,
@@ -508,20 +573,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 10,
   },
-  button: {
-    backgroundColor: "#ddd",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-  },
-  buttonText: {
-    textAlign: "center",
-  },
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   inputContainer: {
     marginBottom: 0,
   },

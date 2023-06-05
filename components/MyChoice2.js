@@ -4,17 +4,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  FlatList,
-  Alert,
+  Alert, Dimensions, ScrollView,Image
 } from "react-native";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import Toolbar from "./Toolbar";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db, auth } from "./firebase";
 import { RadioButton } from "react-native-paper";
 import { Entypo } from "@expo/vector-icons";
+import Navbar from "./Navbar";
+import { AntDesign } from "@expo/vector-icons";
+
+
+const { width } = Dimensions.get('window');
 
 const MyChoice2 = ({ route }) => {
   const navigation = useNavigation();
@@ -29,6 +32,7 @@ const MyChoice2 = ({ route }) => {
   const [validDate, setValidDate] = useState(false);
   const [icons2, setIcons2] = useState();
   const [freeText, setFreeText] = useState([]);
+  const [nameOfCategory , setNameOfCategory] = useState("");
 
   useEffect(() => {
     const getStudents = async () => {
@@ -52,6 +56,8 @@ const MyChoice2 = ({ route }) => {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         setIcons2(data.icons2);
+        setNameOfCategory(data.myChoice2)
+
       });
     };
 
@@ -106,7 +112,7 @@ const MyChoice2 = ({ route }) => {
     // Check if the date is within the desired range
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
-    if (date < minDate || date > currentDate) {
+    if (date < minDate || date >= currentDate) {
       Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
       return null;
     }
@@ -332,36 +338,40 @@ const MyChoice2 = ({ route }) => {
     }
   };
 
+
   return (
+    <View style={styles.container}>
     <View>
-      <Toolbar />
-      <View style={styles.report}>
-        <Text style={{ fontSize: 20, padding: 10 }}> צור/י דיווח חדש</Text>
-        <Ionicons name="create-outline" size={24} color="black" />
+      <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+    </View>
+
+    <View style={styles.title}>
+      <Text style={styles.pageTitle}>דיווח {nameOfCategory} - {"\n"}  {className}</Text>
+    </View>
+
+    <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
+      <View style={styles.container}>
+        <View style={styles.row}>
+          <Text style={styles.subTitle}>תאריך</Text>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            value={dateString}
+            onChangeText={handleChangeText}
+            placeholder="הכנס/י תאריך מהצורה (DD/MM/YYYY)"
+          />
+          {dateString && !validDate && (
+            <Text style={{ color: "red" }}>ערך לא תקין</Text>
+          )}
+        </View>
+        {validDate && <AntDesign name="check" size={24} color="green" />}
       </View>
 
-      <View>
-        <Text>תאריך</Text>
-        <TextInput
-          style={[styles.input, { textAlign: "right" }]}
-          value={dateString}
-          onChangeText={handleChangeText}
-          placeholder="הכנס תאריך מהצורה (DD/MM/YYYY)"
-        />
-        {validDate ? (
-          <Text style={{ color: "green" }}>Correct date</Text>
-        ) : (
-          <Text style={{ color: "red" }}>Incorrect date</Text>
-        )}
-      </View>
-
+      <Text>{"\n"}</Text>
       {icons2 ? (
-        <View style={{ marginTop: 10 }}>
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-around" }}
-          >
+        <View style={styles.tableContainer}>
+        <View style={styles.tableHeader}>
             <Text
-              style={{ textAlign: "right", fontWeight: "bold", fontSize: 16 }}
+              style={styles.tableHeaderText}
             >
               הערות -לא חובה
             </Text>
@@ -374,65 +384,55 @@ const MyChoice2 = ({ route }) => {
             </Text>
           </View>
 
-          <FlatList
-            data={students}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item, index }) => (
-              <View style={styles.nameContainer}>
-                <Text style={styles.name}>{item.student_name}</Text>
-                <View style={styles.radioButtonContainer}>
-                  <TextInput
-                    style={[styles.inputFreeText, { textAlign: "right" }]}
-                    onChangeText={(text) => handleFreeTextChange(text, index)}
-                    value={freeText[index]}
-                  />
+          {students.map((item, index) => (
+  <View key={item.id} style={styles.studentRow}>
+    <View style={styles.radioButtonContainer}>
+      <TextInput
+        style={[styles.inputFreeText, { textAlign: "right" }]}
+        onChangeText={(text) => handleFreeTextChange(text, index)}
+        value={freeText[index]}
+      />
 
-                  <RadioButton.Item
-                    value="bed"
-                    status={
-                      selectedValues[item.id] === "bed"
-                        ? "checked"
-                        : "unchecked"
-                    }
-                    onPress={() => {
-                      setSelectedValues({
-                        ...selectedValues,
-                        [item.id]: "bed",
-                      });
-                    }}
-                  />
-                  <RadioButton.Item
-                    value="good"
-                    status={
-                      selectedValues[item.id] === "good"
-                        ? "checked"
-                        : "unchecked"
-                    }
-                    onPress={() => {
-                      setSelectedValues({
-                        ...selectedValues,
-                        [item.id]: "good",
-                      });
-                    }}
-                  />
-                </View>
-              </View>
-            )}
-          />
+      <RadioButton.Item
+        value="sad"
+        status={
+          selectedValues[item.id] === "sad" ? "checked" : "unchecked"
+        }
+        onPress={() => {
+          setSelectedValues({
+            ...selectedValues,
+            [item.id]: "sad",
+          });
+        }}
+      />
+      <RadioButton.Item
+        value="good"
+        status={
+          selectedValues[item.id] === "good" ? "checked" : "unchecked"
+        }
+        onPress={() => {
+          setSelectedValues({
+            ...selectedValues,
+            [item.id]: "good",
+          });
+        }}
+      />
+    </View>
+    <Text style={styles.name}>{item.student_name}</Text>
+  </View>
+))}
 
-          <TouchableOpacity style={styles.butt} onPress={createReport}>
+          <TouchableOpacity style={styles.button} onPress={createReport}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
+            <Text style={styles.buttonText}>שלח/י דיווח</Text>
             </View>
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={{ marginTop: 10 }}>
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-around" }}
-          >
+        <View style={styles.tableContainer}>
+          <View style={styles.tableHeader}>
             <Text
-              style={{ textAlign: "right", fontWeight: "bold", fontSize: 16 }}
+             style={styles.tableHeaderText}
             >
               טקסט חופשי
             </Text>
@@ -443,30 +443,32 @@ const MyChoice2 = ({ route }) => {
             </Text>
           </View>
 
-          <FlatList
-            data={students}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item, index }) => (
-              <View style={styles.nameContainer}>
-                <Text style={styles.name}>{item.student_name}</Text>
-                <View style={styles.radioButtonContainer}>
-                  <TextInput
-                    style={[styles.inputFreeText, { textAlign: "right" }]}
-                    onChangeText={(text) => handleFreeTextChange(text, index)}
-                    value={freeText[index]}
-                  />
-                </View>
-              </View>
-            )}
-          />
+          {students.map((item, index) => (
+  <View style={styles.studentRow} key={item.id.toString()}>
+    <Text style={styles.name}>{item.student_name}</Text>
+    <View style={styles.radioButtonContainer}>
+      <TextInput
+        style={[styles.inputFreeText, { textAlign: "right" }]}
+        onChangeText={(text) => handleFreeTextChange(text, index)}
+        value={freeText[index]}
+      />
+    </View>
+  </View>
+))}
 
           <TouchableOpacity style={styles.butt} onPress={createReport}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={{ marginLeft: 5 }}>צור דיווח</Text>
+              <Text style={styles.buttonText}>שלח/י דיווח</Text>
             </View>
           </TouchableOpacity>
         </View>
       )}
+            <Text>{"\n\n\n\n\n\n"}</Text>
+
+      </ScrollView>
+      <Navbar/>
+
+      
     </View>
   );
 };
@@ -474,45 +476,18 @@ const MyChoice2 = ({ route }) => {
 export default MyChoice2;
 
 const styles = StyleSheet.create({
-  report: {
-    flexDirection: "row",
-    alignItems: "center",
-    textAlign: "right",
-    justifyContent: "flex-end",
-  },
-
-  container: {
-    padding: 16,
-  },
-  nameContainer: {
-    flexDirection: "row-reverse",
-    justifyContent: "flex-end",
-    marginBottom: 16,
-    justifyContent: "space-around",
-  },
   name: {
     fontWeight: "bold",
     marginRight: 8,
   },
-  optionsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 8,
-  },
+ 
   radioButtonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
     marginRight: 16,
   },
-  radioButtonItem: {
-    height: 24,
-    width: 24,
-  },
+ 
   input: {
     height: 40,
     borderColor: "grey",
@@ -520,16 +495,6 @@ const styles = StyleSheet.create({
     padding: 10,
     width: 300,
     backgroundColor: "white",
-  },
-  butt: {
-    backgroundColor: "#90EE90",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-    width: 100,
-  },
-  back: {
-    padding: "30%",
   },
   inputFreeText: {
     height: 40,
@@ -539,4 +504,116 @@ const styles = StyleSheet.create({
     width: 120,
     backgroundColor: "white",
   },
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 40,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+    textAlign:'center'
+  },
+  subTitle: {
+    fontSize: 24,
+    textAlign: "right",
+    fontWeight: "bold",
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
+  },
+  tableContainer: {
+    width: '90%',
+    marginBottom: 16,
+    marginLeft: '5%',
+    marginRight: '5%',},
+tableHeader: {
+  flexDirection: "row",
+  justifyContent: "space-around",
+  alignItems: "center",
+  marginBottom: 8,
+},
+studentRow: {
+  flexDirection: "row"
+  , alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+},
+studentName: {
+  flex: 1,
+  fontWeight: "bold",
+  textAlign: "right",
+},
+gradeInput: {
+  width: 80,
+},
+freeTextInput: {
+  flex: 1,
+  marginLeft: 16,
+},
+studentRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 16,
+},
+studentName: {
+  flex: 1,
+  fontWeight: "bold",
+  textAlign: "right",
+},
+gradeInput: {
+  width: 80,
+},
+freeTextInput: {
+  flex: 1,
+  marginLeft: 16,
+},
+tableHeaderText:{
+  textAlign: "right",
+   fontWeight: "bold",
+    fontSize: 16,
+    textDecorationLine: 'underline'
+},
 });
