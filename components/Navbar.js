@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Pressable,
   TouchableOpacity,
-  Modal,ScrollView
+  Modal,ScrollView,Dimensions
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Octicons } from "@expo/vector-icons";
@@ -14,13 +14,17 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 
+const screenWidth = Dimensions.get("window").width;
+
+
 const Navbar = () => {
   const navigation = useNavigation();
   const [showModal, setShowModal] = useState(false);
 
   const toggleModal = () => {
-    setShowModal(!showModal);
+    setShowModal((prevState) => !prevState);
   };
+  
 
   return (
 
@@ -86,20 +90,22 @@ const Navbar = () => {
         </View>
       </View>
 
-      <Modal visible={showModal} animationType="slide">
+      <Modal visible={showModal} animationType="slide" style={styles.allTheModal}>
         <View style={styles.modalContainer}>
           <TouchableOpacity
             style={[
               styles.cell,
             ]}
-            onPress={() => navigation.navigate("Profile")}
-          >
+            onPress={() => {
+              navigation.navigate("Profile");
+              toggleModal();
+            }}          >
             <Text style={styles.cellText}> איזור אישי</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.cell]}
-            onPress={() => navigation.navigate("SetRules")}
+            onPress={() =>{ navigation.navigate("SetRules"); toggleModal();}}
           >
             <Text style={styles.cellText}>הגדרת רמזור</Text>
           </TouchableOpacity>
@@ -108,7 +114,7 @@ const Navbar = () => {
             style={[
               styles.cell,
             ]}
-            onPress={() => navigation.navigate("MyClasses")}
+            onPress={() => {navigation.navigate("MyClasses"); toggleModal();}}
           >
             <Text style={styles.cellText}>הכיתות שלי</Text>
           </TouchableOpacity>
@@ -117,7 +123,7 @@ const Navbar = () => {
             style={[
               styles.cell,
             ]}
-            onPress={() => navigation.navigate("HomePage")}
+            onPress={() => {navigation.navigate("HomePage"); toggleModal();} }
           >
             <Text style={styles.cellText}>דיווחים</Text>
           </TouchableOpacity>
@@ -126,7 +132,7 @@ const Navbar = () => {
             style={[
               styles.cell,
             ]}
-            onPress={() => navigation.navigate("DataHistory")}
+            onPress={() => {navigation.navigate("DataHistory"); toggleModal();}}
           >
             <Text style={styles.cellText}> היסטוריה</Text>
           </TouchableOpacity>
@@ -135,7 +141,7 @@ const Navbar = () => {
             style={[
               styles.cell,
             ]}
-            onPress={() => navigation.navigate("Gallery")}
+            onPress={() => {navigation.navigate("Gallery"); toggleModal();}}
           >
             <Text style={styles.cellText}>גלריה </Text>
           </TouchableOpacity>
@@ -144,7 +150,7 @@ const Navbar = () => {
             style={[
               styles.cell,
             ]}
-            onPress={() => navigation.navigate("HomePage")}
+            onPress={() => {navigation.navigate("HomePage"); toggleModal();}}
           >
             <Text style={styles.cellText}>מידע - לעדכן </Text>
           </TouchableOpacity>
@@ -180,11 +186,15 @@ const styles = StyleSheet.create({
   IconBehave: {
     padding: 14,
   },
+  
   modalContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "white",
+    width: screenWidth * 0.7, 
+    marginLeft: screenWidth * 0.15, 
+  
   },
   modalCloseButton: {
     position: "absolute",
@@ -195,22 +205,15 @@ const styles = StyleSheet.create({
   modalCloseButtonText: {
     fontSize: 20,
     fontWeight: "bold",
-  },
-  sidebarCloseButtonText: {
-    fontSize: 24,
-  },
-
-  sidebarCloseButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    zIndex: 1,
+  
   },
   cell: {
     flex: 1,
     backgroundColor: "#fff",
-    borderRadius: 5,
-    margin: 5,
+    borderRadius: 10,
+    marginVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -218,23 +221,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#add8e6",
   },
   cellText: {
-    fontSize: 16,
-    fontWeight: 'bold'
+    fontSize: 20,
+    fontWeight: "bold",
+    color:"#482121",
+    fontWeight:'bold'
   },
-  sidebarContainer: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 10,
-  },
-  sidebarButton: {
-    position: "absolute",
-    top: 20,
-    right: 10,
-    zIndex: 1,
-  },
-  sidebarButtonText: {
-    fontSize: 24,
-  },
+  
 });
 
 export default Navbar;

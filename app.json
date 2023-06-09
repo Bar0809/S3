@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "sosProject",
+    "name": "Tikita",
     "slug": "sosProject",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,19 +19,30 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "plugins": ["expo-document-picker"]
+      "plugins": [
+        "expo-document-picker"
+      ]
     },
     "android": {
       "inputMethod": "hebrew",
       "textInputMode": "normal",
+      "versionCode": "1",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "plugins": ["expo-document-picker"]
+      "plugins": [
+        "expo-document-picker"
+      ],
+      "package": "com.bardavid.sosProject"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5716d756-ffee-4b8c-a614-f9213584589b"
+      }
     }
   }
 }

@@ -1036,7 +1036,8 @@ const querySnapshot = await getDocs(q);
       
        <Text>
           כל כיתה תקבל צבע מתוך צבעי הרמזור - ירוק, כתום או אדום בהתאם לדיווחים
-          שדווחו על ידך בשבוע האחרון.{"\n"}
+          שדווחו על ידך בשבועיים האחרונים.{"\n"}
+          כל אחת מהקטגוריות לדיווח תקבל צבע של רמזור לפי המוגדר מטה, הצבע של הכיתה יקבע לפי ממוצע צבעי הקטגוריות!
         </Text>
                 <Text style={[styles.pageTitle, { textAlign: "center" , fontSize:24,textDecorationLine:'underline'}]}>הגדרת הרמזור:</Text>
 
@@ -1053,6 +1054,7 @@ const querySnapshot = await getDocs(q);
               <Entypo name="emoji-happy" size={24} color="black" style={{textAlign:'center', alignItems:'center' }} />
               {appearancesIsEditMode[0] ? (
                 <View style={styles.editModeContainer}>
+
                   <TextInput
                     value={appearancesPercentage[0]}
                     onChangeText={(text) =>
@@ -1077,6 +1079,7 @@ const querySnapshot = await getDocs(q);
                     <Text style={styles.buttonText}>עדכן</Text>
                   </TouchableOpacity>
                 </View>
+
               ) : (
                 <View style={styles.viewModeContainer}>
                   <Text style={styles.percentageText}>
@@ -1446,7 +1449,7 @@ const querySnapshot = await getDocs(q);
 
             <View>
               <Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית נוכחות:</Text>
-              <Text> נוכחות</Text>
+              <Text style={{textAlign:'center', alignItems:'center' }}> נוכחות</Text>
               {presenceIsEditMode[0] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1487,7 +1490,7 @@ const querySnapshot = await getDocs(q);
                 </View>
               )}
 
-              <Text> איחורים</Text>
+              <Text style={{textAlign:'center', alignItems:'center' }}> איחורים</Text>
               {presenceIsEditMode[1] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1521,7 +1524,7 @@ const querySnapshot = await getDocs(q);
                 </View>
               )}
               
-              <Text> חיסורים</Text>
+              <Text style={{textAlign:'center', alignItems:'center' }}> חיסורים</Text>
               {presenceIsEditMode[2] ? (
                 <View style={styles.editModeContainer}>
                   <TextInput
@@ -1888,7 +1891,7 @@ const querySnapshot = await getDocs(q);
 
 <View>
 <Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית נוכחות:</Text>
-<Text> נוכחות</Text>
+<Text style={{textAlign:'center', alignItems:'center' }}> נוכחות</Text>
 {presenceIsEditMode[3] ? (
   <View style={styles.editModeContainer}>
    <TextInput
@@ -1912,7 +1915,7 @@ const querySnapshot = await getDocs(q);
   </View>
 )}
 
-<Text> איחורים</Text>
+<Text style={{textAlign:'center', alignItems:'center' }}> איחורים</Text>
 {presenceIsEditMode[4] ? (
   <View style={styles.editModeContainer}>
    <TextInput
@@ -1936,7 +1939,7 @@ const querySnapshot = await getDocs(q);
   </View>
 )}
 
-<Text> חיסורים</Text>
+<Text style={{textAlign:'center', alignItems:'center' }}> חיסורים</Text>
 {presenceIsEditMode[5] ? (
   <View style={styles.editModeContainer}>
    <TextInput
@@ -1964,7 +1967,7 @@ const querySnapshot = await getDocs(q);
 <View>
 <Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית אירועים מיוחדים:</Text>
 {eventsIsEditMode[1] ? (
-  <View style={styles.editModeContainer}>
+    <View style={styles.inputButtonContainer}>
    <TextInput
   value={eventsPercentage[1]}
   onChangeText={(text) => handlePercentageChange(text, "Events", 'orange' , '')}
@@ -1977,6 +1980,7 @@ const querySnapshot = await getDocs(q);
       <Text style={styles.buttonText}>ערוך</Text>
     </TouchableOpacity>
   </View>
+
 ) : (
   <View style={styles.viewModeContainer}>
     <Text style={styles.percentageText}>{eventsPercentage[1]}</Text>
@@ -2077,21 +2081,21 @@ const querySnapshot = await getDocs(q);
 
 <View>
 <Text style={{fontWeight:'bold', fontSize:18}}> קטגוריית נוכחות:</Text>
-<Text> נוכחות</Text>
+<Text style={{textAlign:'center', alignItems:'center' }}> נוכחות</Text>
 
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}>פחות מ- {presencePercentage[3]}%</Text>
 </View>
 
 
-<Text> איחורים</Text>
+<Text style={{textAlign:'center', alignItems:'center' }}> איחורים</Text>
 
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}> יותר מ- {presencePercentage[4]}% </Text>
 </View>
 
 
-<Text> חיסורים</Text>
+<Text style={{textAlign:'center', alignItems:'center' }}> חיסורים</Text>
 
 <View style={styles.viewModeContainer}>
   <Text style={styles.percentageText}> יותר מ- {presencePercentage[5]}%</Text>
@@ -2111,7 +2115,13 @@ const querySnapshot = await getDocs(q);
 </View>
     </View>
     )}
-</ScrollView>  
+                <Text>{"\n\n\n\n\n\n"}</Text>
+
+</ScrollView> 
+
+<Text>{"\n\n\n\n\n\n"}</Text>
+
+<Navbar/>
       </View>
  
   );
@@ -2149,12 +2159,24 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
   editModeContainer: {
+    width: width * 0.85,
     flexDirection: "row",
     alignItems: "center",
+  },
+  inputButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '90%',
+    marginLeft: '5%',
+    marginRight: '5%',
   },
   viewModeContainer: {
     flexDirection: "row",
     alignItems: "center",
+    width: width * 0.85,
+textAlign:'center'
+
   },
   percentageText: {
     fontSize: 16,
@@ -2162,7 +2184,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    height: 40,
+    height: 60,
     borderColor: "gray",
     borderWidth: 1,
     marginRight: 10,

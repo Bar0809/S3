@@ -45,7 +45,7 @@ const SetDetails = () => {
   const [uploadText, setUploadText] = useState("");
   const [counter, setCounter] = useState(0);
   const [homePage, setHomePage] = useState("false");
-  const [class_id , setClass_id] = useState ('')
+  const [class_id , setClass_id] = useState ('');
 
   const handleNumInputsChange = (value) => {
     if (value > 0) {
@@ -135,6 +135,7 @@ const SetDetails = () => {
       const classRef = await addDoc(classesCollectionRef, classDoc);
       const classId = classRef.id;
       setClass_id(classId)
+      
 
       const courses = inputValues.map((courseName) => {
         const courseDoc = {
@@ -174,6 +175,7 @@ const SetDetails = () => {
           );
         } else {
           studentNames.push(cellValue);
+
 
           const studentDoc = {
             t_id: auth.currentUser.uid,
@@ -257,6 +259,7 @@ const SetDetails = () => {
 
     const promise = addDoc(collectionRef, lightsDoc);
 
+
     const collectionRef_ = collection(db, "Colors");
     const colorsDoc = {
       t_id: auth.currentUser.uid,
@@ -293,6 +296,18 @@ const SetDetails = () => {
 
   const navigateToHomePage = () => {
     if (documentIds.length > 0) {
+      Alert.alert(
+        'שימו לב' , 
+        'באיזור אישי ניתן להגדיר 2 קטגוריות לדיווח לפי בחירתך. כמו כן ניתן לקבל מידע על  שיטת הרמזור בדף הגדרת הרמזור. '
+      ,
+        [
+          {
+            text: "אוקיי",
+            onPress: () => {},
+            style: "cancel",
+          },
+        ]
+      );
       navigation.navigate("HomePage");
     } else {
       Alert.alert("שגיאה", ",אין כיתות ברשימה");

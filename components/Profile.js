@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
-import Toolbar from "./Toolbar";
 import {
   View,
-  StyleSheet,
   Text,
-  TouchableOpacity,
-  Animated,
-  LayoutAnimation,
   TextInput,
+  StyleSheet,
+  TouchableOpacity,
   ScrollView,
+  Alert, Dimensions, Image
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Entypo, MaterialIcons } from "@expo/vector-icons";
@@ -24,6 +22,10 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
+import Navbar from "./Navbar";
+
+const { width } = Dimensions.get("window");
+
 
 const Profile = () => {
   const [userData, setUserData] = useState({});
@@ -99,29 +101,26 @@ const Profile = () => {
   };
 
   return (
+    <View style={styles.container}>
+    <View>
+      <Image source={require("../assets/miniLogo-removebg-preview.png")} />
+    </View>
+
+    <View style={styles.title}>
+      <Text style={[styles.pageTitle, { textAlign: "center" }]}>
+        איזור אישי
+      </Text>
+    </View>
     <ScrollView showsVerticalScrollIndicator={false} horizontal={false}>
-      <View>
-        <Toolbar />
-        <View style={styles.title}>
-          <Text style={styles.pageTitle}>האיזור אישי: </Text>
-        </View>
 
         <View style={[{ padding: 20 }]}>
           <Text
-            style={[
-              {
-                textAlign: "right",
-                fontSize: 24,
-                fontWeight: "bold",
-                textDecorationLine: "underline",
-              },
-            ]}
+        style={styles.subTitle}
           >
             פרטים אישיים-{" "}
           </Text>
 
           <View style={styles.row}>
-            <Entypo name="edit" size={24} color="black" />
             <Text
               style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
             >
@@ -133,7 +132,6 @@ const Profile = () => {
           </View>
 
           <View style={styles.row}>
-            <Entypo name="edit" size={24} color="black" />
             <Text
               style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
             >
@@ -156,7 +154,6 @@ const Profile = () => {
           </View>
 
           <View style={styles.row}>
-            <Entypo name="edit" size={24} color="black" />
             <Text
               style={[{ textAlign: "right", fontWeight: "bold", fontSize: 20 }]}
             >
@@ -168,149 +165,110 @@ const Profile = () => {
           </View>
         </View>
 
-        <View style={[{ padding: 20 }]}>
-          <Text
-            style={[
-              {
-                textAlign: "right",
-                fontSize: 24,
-                fontWeight: "bold",
-                textDecorationLine: "underline",
-              },
-            ]}
-          >
-            התאמה אישית-{" "}
-          </Text>
-          <Text style={[{ textAlign: "right", fontSize: 18, color: "red" }]}>
-            בחר/י את רגישות ההתראות להתנהגויות בכיתה
-          </Text>
-
-          <RadioButton.Group
-            onValueChange={(value) => setChecked(value)}
-            value={checked}
-          >
-            <View style={styles.radioButtonContainer}>
-              <RadioButton.Item
-                label="רגישות גבוהה"
-                value="high"
-                style={styles.radioButtonItem}
-              />
-            </View>
-            <View style={styles.radioButtonContainer}>
-              <RadioButton.Item
-                label="רגישות בינונית"
-                value="medium"
-                style={styles.radioButtonItem}
-              />
-            </View>
-            <View style={styles.radioButtonContainer}>
-              <RadioButton.Item
-                label="רגישות נמוכה"
-                value="low"
-                style={styles.radioButtonItem}
-              />
-            </View>
-          </RadioButton.Group>
-        </View>
+        
 
         {info === false ? (
           <View style={[{ padding: 20 }]}>
             <Text
               style={[
-                {
-                  textAlign: "right",
-                  fontSize: 24,
-                  fontWeight: "bold",
-                  textDecorationLine: "underline",
-                },
+                styles.subTitle
               ]}
             >
               הגדר/י 2 נושאים לדיווח לפי רצונך:{" "}
             </Text>
-            <TextInput
+            <View style={{textAlign:'right', alignItems:'flex-end'}}>
+                 <TextInput
               style={styles.input}
               onChangeText={(text) => setMyChoice1(text)}
               value={myChoice1}
-              placeholder="נושא 1"
+              placeholder="הכנס/י את הקטגוריה הראשונה לבחירתך"
             />
-            <Text>בחר/י את אפשרות הדיווח:</Text>
+            <Text style={{textAlign:'right', fontWeight:'bold'}}>בחר/י את אפשרות הדיווח:</Text>
 
-            <View>
+            </View>
+         
+
+            <View style={{textAlign:'right', alignItems:'flex-end'}}>
               <TouchableOpacity
                 onPress={() => setIcons1(true)}
                 style={{ flexDirection: "row", alignItems: "center" }}
-              >
+              >   
+                           <Text>אייקונים והערות</Text>
+
                 <RadioButton
                   value={icons1}
                   status={icons1 ? "checked" : "unchecked"}
                   onPress={() => setIcons1(true)}
                 />
 
-                <Text>אייקונים והערות</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => setIcons1(false)}
                 style={{ flexDirection: "row", alignItems: "center" }}
-              >
+              >               
+               <Text>הערות בלבד</Text>
+
                 <RadioButton
                   value={!icons1}
                   status={!icons1 ? "checked" : "unchecked"}
                   onPress={() => setIcons1(false)}
                 />
-                <Text>הערות בלבד</Text>
               </TouchableOpacity>
             </View>
+
+            <View style={{textAlign:'right', alignItems:'flex-end'}}>
 
             <TextInput
               style={styles.input}
               onChangeText={(text) => setMyChoice2(text)}
               value={myChoice2}
-              placeholder="נושא 2"
+              placeholder="הכנס/י את הקטגוריה השנייה לבחירתך"
             />
+            <Text style={{textAlign:'right', fontWeight:'bold'}}>בחר/י את אפשרות הדיווח:</Text>
 
-            <View>
+</View>
+
+<View style={{textAlign:'right', alignItems:'flex-end'}}>
               <TouchableOpacity
                 onPress={() => setIcons2(true)}
                 style={{ flexDirection: "row", alignItems: "center" }}
               >
+                                <Text>אייקונים והערות</Text>
+
                 <RadioButton
                   value={icons2}
                   status={icons2 ? "checked" : "unchecked"}
                   onPress={() => setIcons2(true)}
                 />
 
-                <Text>אייקונים והערות</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setIcons2(false)}
                 style={{ flexDirection: "row", alignItems: "center" }}
-              >
+              >     
+                         <Text>הערות בלבד</Text>
+
                 <RadioButton
                   value={!icons2}
                   status={!icons2 ? "checked" : "unchecked"}
                   onPress={() => setIcons2(false)}
                 />
-                <Text>הערות בלבד</Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.saveButton} onPress={saveNames}>
-              <Text style={styles.buttonText}>Save names</Text>
+            <TouchableOpacity style={styles.button} onPress={saveNames}>
+              <Text style={styles.buttonText}>שמור שינויים</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View>
             <Text
-              style={[
-                {
-                  textAlign: "right",
-                  fontSize: 24,
-                  fontWeight: "bold",
-                  textDecorationLine: "underline",
-                },
-              ]}
+           style={[
+            styles.subTitle
+          ]}
             >
-              נושאי הדיווח האישיים:{" "}
+              קטגוריות הדיווח האישיים:{" "}
             </Text>
 
             <View style={styles.row}>
@@ -343,17 +301,12 @@ const Profile = () => {
           </View>
         )}
 
-        <View style={[{ flex: 1, alignItems: "center" }]}>
-          <TouchableOpacity
-            style={styles.back}
-            onPress={() => navigation.navigate("HomePage")}
-          >
-            <MaterialIcons name="navigate-next" size={24} color="black" />
-            <Text style={[{ textAlign: "left" }]}>הקודם</Text>
-          </TouchableOpacity>
-        </View>
+            </ScrollView>
+            <Text>{"\n\n\n\n\n\n"}</Text>
+
+            <Navbar/>
+
       </View>
-    </ScrollView>
   );
 };
 
@@ -385,11 +338,92 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   input: {
-    height: 80,
+    height: 40,
     borderColor: "grey",
     borderWidth: 1,
     padding: 10,
-    width: 100,
+    width: 300,
     backgroundColor: "white",
+    textAlign: "right"
+    },
+  container: {
+    flex: 1,
+    backgroundColor: "#F2E3DB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollContainer: {
+    flex: 1,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row-reverse", 
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  itemText: {
+    fontSize: 22,
+    textAlign: "right",
+  },
+  itemTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+    justifyContent: "center",
+  },
+  title: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  pageTitle: {
+    color: "#AD8E70",
+    fontSize: 48,
+    fontWeight: "bold",
+    padding: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.25)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+  },
+  subTitle: {
+    fontSize: 24,
+    textAlign: "right",
+    fontWeight: "bold",
+    color: "#AD8E70",
+    textDecorationLine:'underline'
+
+  },
+  button: {
+    width: width * 0.4,
+    height: 65,
+    justifyContent: "center",
+    backgroundColor: "#F1DEC9",
+    borderWidth: 2,
+    borderColor: "#F1DEC9",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginVertical: 10,
+    borderRadius: 15,
+    alignSelf: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: "rgba(0, 0, 0, 0.25)",
+        shadowOffset: { width: 2, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  buttonText: {
+    fontSize: 24,
+    color: "#AD8E70",
   },
 });
