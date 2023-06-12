@@ -98,7 +98,7 @@ const MyClasses = () => {
         }
       }
       
-    Alert.alert(' צבע הרמזור' , `הכיתה ${class_name} קיבלה את הצבע ה- ${color}.${description}`
+    Alert.alert('a צבע הרמזור' , `הכיתה ${class_name} קיבלה את הצבע ה- ${color}.${description}`
     , [
       {
         text: "אוקיי",

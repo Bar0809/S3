@@ -6,14 +6,15 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  Alert,Dimensions
+  Alert,
+  Dimensions,
+  StatusBar,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { auth } from "./firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
-const { width } = Dimensions.get("window");
-
+const { width, height } = Dimensions.get("window");
 
 const FullLogin = () => {
   const navigation = useNavigation();
@@ -25,12 +26,16 @@ const FullLogin = () => {
       const user = await signInWithEmailAndPassword(auth, email, password);
       navigation.navigate("HomePage");
     } catch (error) {
-      Alert.alert("אופס", "כתובת המייל ו/או הסיסמה שגויים, אנא נסה/י שוב");
+      Alert.alert(
+        "אופס",
+        "כתובת המייל ו/או הסיסמה שגויים, אנא נסה/י שוב"
+      );
     }
   };
 
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor="#F2E3DB" />
       <Image style={styles.image} source={require("../assets/logo2.png")} />
       <TextInput
         style={[styles.input, { textAlign: "right" }]}
@@ -67,29 +72,29 @@ const FullLogin = () => {
     </View>
   );
 };
+
 export default FullLogin;
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
-    padding: 50,
+    flex: 1,
     backgroundColor: "#F2E3DB",
     alignItems: "center",
     justifyContent: "center",
   },
   input: {
     backgroundColor: "white",
-    width: "100%",
+    width: "80%",
     height: "8%",
     borderColor: "#e8e8e8",
     borderWidth: 1,
     borderRadius: 5,
-    paddingHorizintal: 5,
+    paddingHorizontal: 5,
     marginVertical: 5,
-    textAlign: "rigth",
+    textAlign: "right",
   },
   image: {
-    width: "100%",
+    width: "90%",
   },
   login: {
     width: width * 0.4,
@@ -114,7 +119,6 @@ const styles = StyleSheet.create({
         elevation: 5,
       },
     }),
-
   },
   signup: {
     width: width * 0.4,
@@ -143,9 +147,8 @@ const styles = StyleSheet.create({
   fpassword: {
     textAlign: "center",
   },
-  text:{
-    color:'#A4907C',
+  text: {
+    color: "#A4907C",
     fontSize: 24,
-
-  }
+  },
 });

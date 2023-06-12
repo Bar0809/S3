@@ -61,7 +61,7 @@ title: {
   alignItems: "center",
 },
   pageTitle: {
-    color: "black",
+    color: '#AD8E70',
     fontSize: 40,
     fontWeight: "bold",
     padding: 10,

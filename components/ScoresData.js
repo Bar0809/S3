@@ -66,8 +66,13 @@ const ScoresData = ({route}) => {
 
     const currentDate = new Date();
     const minDate = new Date("2023-01-01");
-    if (date < minDate || date >= currentDate) {
-      Alert.alert('', 'לא ניתן להכניס תאריך עתידי')
+    if (date < minDate ) {
+      Alert.alert("", "לא ניתן להכניס תאריך קטן מה- 01/01/2023");
+      return false;
+    }
+
+    if ( date > currentDate) {
+      Alert.alert("", "לא ניתן להכניס תאריך עתידי");
       return false;
     }
 
