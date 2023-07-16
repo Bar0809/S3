@@ -1,0 +1,39 @@
+[debug] [2023-01-06T09:41:24.338Z] ----------------------------------------------------------------------
+[debug] [2023-01-06T09:41:24.340Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Bar\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init emulators
+[debug] [2023-01-06T09:41:24.341Z] CLI Version:   11.20.0
+[debug] [2023-01-06T09:41:24.341Z] Platform:      win32
+[debug] [2023-01-06T09:41:24.341Z] Node Version:  v16.14.0
+[debug] [2023-01-06T09:41:24.342Z] Time:          Fri Jan 06 2023 11:41:24 GMT+0200 (Israel Standard Time)
+[debug] [2023-01-06T09:41:24.342Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2023-01-06T09:41:24.409Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2023-01-06T09:41:24.409Z] > authorizing via signed-in user (sosschoolsystem@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\Bar\sosProject
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2023-01-06T09:41:31.402Z] Using project from CLI flag: tikita-76085
+[debug] [2023-01-06T09:41:31.404Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tikita-76085 [none]
+[debug] [2023-01-06T09:41:31.902Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tikita-76085 200
+[debug] [2023-01-06T09:41:31.902Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tikita-76085 {"projectId":"tikita-76085","projectNumber":"1036872786088","displayName":"TIKITA","name":"projects/tikita-76085","resources":{"hostingSite":"tikita-76085"},"state":"ACTIVE","etag":"1_b7248970-ea71-4fa0-b232-1201316acf0c"}
+[info] i  Using project tikita-76085 (TIKITA) 
+[info] 
+=== Emulators Setup
